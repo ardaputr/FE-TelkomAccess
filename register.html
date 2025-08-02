@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Register Akun</title>
+    <link rel="stylesheet" href="style/register.css" />
+  </head>
+  <body>
+    <div class="container">
+      <form id="registerForm">
+        <h2>Register Akun Baru</h2>
+        <input type="text" id="nama" placeholder="Nama Lengkap" required />
+        <input type="text" id="jabatan" placeholder="Jabatan" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Register</button>
+        <p>Sudah punya akun? <a href="login.html">Login di sini</a></p>
+      </form>
+    </div>
+
+    <script>
+      document.getElementById("registerForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const res = await fetch("http://localhost:5000/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nama: document.getElementById("nama").value,
+            jabatan: document.getElementById("jabatan").value,
+            email: document.getElementById("email").value,
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("msg").style.color = "green";
+          document.getElementById("msg").innerText =
+            "Registrasi berhasil! Silakan login.";
+          setTimeout(() => (window.location = "login.html"), 1500);
+        } else {
+          document.getElementById("msg").style.color = "red";
+          document.getElementById("msg").innerText =
+            data.error || "Registrasi gagal";
+        }
+      };
+    </script>
+  </body>
+</html>

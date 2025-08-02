@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Folder Lokasi</title>
+    <link rel="stylesheet" href="style/folder.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img
+            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
+            alt="Logo"
+            class="logo-icon"
+            style="
+              height: 55px;
+              max-width: 220px;
+              object-fit: contain;
+              margin-right: 9px;
+              vertical-align: middle;
+            "
+          />
+        </div>
+        <nav>
+          <a href="dashboard.html">Dashboard</a>
+          <a href="folder.html" class="active">Kelola Folder</a>
+          <a href="#" onclick="logout()">Logout</a>
+        </nav>
+      </aside>
+      <!-- Main Content -->
+      <main>
+        <div class="folder-card">
+          <h2>Daftar Folder Lokasi</h2>
+          <div class="data-table-section">
+            <div
+              class="folder-topbar"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 18px;
+              "
+            >
+              <form
+                id="buatFolder"
+                class="form-inline"
+                style="display: flex; gap: 8px"
+              >
+                <input
+                  type="text"
+                  id="nama_lokasi"
+                  placeholder="Nama Lokasi Baru"
+                  required
+                />
+                <button type="submit">Buat Folder</button>
+              </form>
+              <div class="searchbar-wrap" style="margin-left: auto">
+                <input
+                  type="text"
+                  id="searchFolder"
+                  placeholder="Cari Nama Lokasi..."
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+            <table class="data-table" style="width: 100%">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Lokasi</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="listFolder"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- MODAL EDIT FOLDER -->
+    <div
+      id="modalEditFolder"
+      class="modal-edit-note"
+      style="
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(44, 54, 74, 0.22);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        class="modal-edit-content"
+        style="
+          background: #fff;
+          max-width: 440px;
+          width: 96vw;
+          border-radius: 13px;
+          box-shadow: 0 8px 40px rgba(64, 81, 137, 0.17);
+          padding: 28px 22px 20px 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        "
+      >
+        <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
+          Edit Nama Folder
+        </div>
+        <input
+          type="text"
+          id="modalEditFolderInput"
+          maxlength="100"
+          autocomplete="off"
+        />
+        <div
+          class="modal-actions"
+          style="
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 7px;
+          "
+        >
+          <button onclick="closeEditFolderModal()">Batal</button>
+          <button id="modalEditFolderSimpanBtn" class="primary">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function logout() {
+        localStorage.removeItem("token");
+        window.location = "login.html";
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) window.location = "login.html";
+
+      // Data folder global untuk filtering
+      let allFolders = [];
+
+      // Buat folder
+      document.getElementById("buatFolder").onsubmit = async function (e) {
+        e.preventDefault();
+        await fetch("https://be-telkom-access.vercel.app/locations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            nama_lokasi: document.getElementById("nama_lokasi").value,
+          }),
+        });
+        document.getElementById("nama_lokasi").value = "";
+        loadFolders();
+      };
+
+      // Edit Folder: Show Modal
+      let editingFolderId = null;
+      window.editFolder = function (id, oldNama) {
+        editingFolderId = id;
+        const modal = document.getElementById("modalEditFolder");
+        const input = document.getElementById("modalEditFolderInput");
+        input.value = oldNama;
+        modal.style.display = "flex";
+        setTimeout(() => input.focus(), 120);
+      };
+
+      window.closeEditFolderModal = function () {
+        document.getElementById("modalEditFolder").style.display = "none";
+        editingFolderId = null;
+        document.getElementById("modalEditFolderInput").value = "";
+      };
+
+      document.getElementById("modalEditFolderSimpanBtn").onclick =
+        async function () {
+          const nama = document
+            .getElementById("modalEditFolderInput")
+            .value.trim();
+          if (!editingFolderId || !nama) return;
+          await fetch(
+            `https://be-telkom-access.vercel.app/locations/${editingFolderId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ nama_lokasi: nama }),
+            }
+          );
+          closeEditFolderModal();
+          loadFolders();
+        };
+
+      // ESC close modal
+      window.addEventListener("keydown", function (e) {
+        if (
+          document.getElementById("modalEditFolder").style.display === "flex" &&
+          e.key === "Escape"
+        ) {
+          closeEditFolderModal();
+        }
+      });
+      // (Optional) Klik luar modal juga close
+      document
+        .getElementById("modalEditFolder")
+        .addEventListener("mousedown", function (e) {
+          if (e.target === this) closeEditFolderModal();
+        });
+
+      // Delete folder
+      window.deleteFolder = async function (id) {
+        if (
+          confirm(
+            "Yakin ingin menghapus folder ini beserta seluruh file dan catatannya?"
+          )
+        ) {
+          await fetch(`https://be-telkom-access.vercel.app/locations/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + token },
+          });
+          loadFolders();
+        }
+      };
+
+      // Render tabel berdasarkan data & keyword
+      function renderFolders(keyword = "") {
+        const keywordLower = keyword.trim().toLowerCase();
+        let html = "";
+        const filtered = allFolders.filter((f) =>
+          f.nama_lokasi.toLowerCase().includes(keywordLower)
+        );
+        filtered.forEach((f, idx) => {
+          // Sinkron status dari location_status[0].status
+          let isCompleted =
+            f.location_status &&
+            f.location_status.length > 0 &&
+            f.location_status[0].status === "lengkap";
+          let statusClass = isCompleted ? "badge-lengkap" : "badge-belum";
+          html += `<tr>
+            <td>${idx + 1}</td>
+            <td>
+              <a class="lokasi-link" href="folder_detail.html?id=${f.id}">
+                <b>${f.nama_lokasi}</b>
+              </a>
+            </td>
+            <td>
+              <span class="badge status ${statusClass}">
+                ${isCompleted ? "LENGKAP" : "BELUM LENGKAP"}
+              </span>
+            </td>
+            <td>
+              <button class="aksi-btn" onclick="editFolder('${
+                f.id
+              }', '${f.nama_lokasi.replace(/'/g, "\\'")}')">Edit</button>
+              <button class="aksi-btn danger" onclick="deleteFolder('${
+                f.id
+              }')">Hapus</button>
+            </td>
+          </tr>`;
+        });
+        document.getElementById("listFolder").innerHTML = html;
+      }
+
+      // Load data folder dari API, filter di frontend
+      async function loadFolders(keyword = "") {
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/locations",
+          {
+            headers: { Authorization: "Bearer " + token },
+          }
+        );
+        allFolders = await res.json();
+        renderFolders(keyword);
+      }
+      loadFolders();
+
+      // Event search real-time
+      document
+        .getElementById("searchFolder")
+        .addEventListener("input", function () {
+          renderFolders(this.value);
+        });
+    </script>
+  </body>
+</html>

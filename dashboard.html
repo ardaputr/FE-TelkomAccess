@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style/dashboard.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img
+            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
+            alt="Logo"
+            class="logo-icon"
+            style="
+              height: 50px;
+              max-width: 250px;
+              object-fit: contain;
+              margin-right: 9px;
+              vertical-align: middle;
+            "
+          />
+        </div>
+
+        <nav>
+          <a href="#" class="active">Dashboard</a>
+          <a href="folder.html">Kelola Folder</a>
+          <a href="#" onclick="logout()">Logout</a>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main>
+        <!-- Header Bar -->
+        <header class="topbar">
+          <h2>Dashboard</h2>
+          <div class="user-profile" id="userProfileBtn" tabindex="0">
+            👤 Admin ▾
+          </div>
+        </header>
+
+        <!-- Card Stats -->
+        <section class="overview-cards">
+          <div class="card blue">
+            <div class="card-title">Total Lokasi</div>
+            <div class="card-value" id="total_lokasi">0</div>
+          </div>
+          <div class="card green">
+            <div class="card-title">Sudah Lengkap</div>
+            <div class="card-value" id="lokasi_completed">0</div>
+          </div>
+          <div class="card orange">
+            <div class="card-title">Belum Lengkap</div>
+            <div class="card-value" id="lokasi_belum">0</div>
+          </div>
+        </section>
+
+        <!-- Data Table -->
+        <section class="data-table-section">
+          <h3>Daftar Lokasi</h3>
+          <div class="dashboard-searchbar">
+            <input
+              type="text"
+              id="searchLokasi"
+              placeholder="Cari Nama Lokasi..."
+              autocomplete="off"
+            />
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Lokasi</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dataLokasi">
+              <!-- Data akan diisi dari JS -->
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal Profile & Password -->
+    <div id="profileModal" class="modal-profile" style="display: none">
+      <div class="modal-content">
+        <span class="close-modal" onclick="closeProfileModal()">&times;</span>
+        <h3>Profil Akun</h3>
+        <form id="formProfile" autocomplete="off">
+          <label>Nama:</label>
+          <input type="text" id="profileNama" required />
+          <label>Username:</label>
+          <input type="text" id="profileUsername" required readonly />
+          <label>Jabatan:</label>
+          <input type="text" id="profileJabatan" required />
+          <label>Email:</label>
+          <input type="email" id="profileEmail" required />
+          <button type="submit">Simpan Perubahan</button>
+        </form>
+        <div id="profileMsg"></div>
+        <hr />
+        <h3>Ganti Password</h3>
+        <form id="formChangePass" autocomplete="off">
+          <label>Password Lama:</label>
+          <input
+            type="password"
+            id="oldPass"
+            required
+            autocomplete="current-password"
+          />
+          <label>Password Baru:</label>
+          <input
+            type="password"
+            id="newPass"
+            required
+            minlength="6"
+            autocomplete="new-password"
+          />
+          <button type="submit">Ubah Password</button>
+        </form>
+        <div id="changePassMsg"></div>
+      </div>
+    </div>
+
+    <script>
+      function logout() {
+        localStorage.removeItem("token");
+        window.location = "login.html";
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) window.location = "login.html";
+
+      // Nama user global
+      let namaAkun = "Admin";
+      let allLokasi = [];
+
+      // --- Nama Admin Dinamis di Header ---
+      async function setUserNameOnHeader() {
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/account/me",
+            {
+              headers: { Authorization: "Bearer " + token },
+            }
+          );
+          const data = await res.json();
+          if (data.nama) {
+            namaAkun = data.nama;
+            document.getElementById(
+              "userProfileBtn"
+            ).innerHTML = `👤 ${namaAkun} ▾`;
+          }
+        } catch (err) {
+          document.getElementById("userProfileBtn").innerHTML = `👤 Admin ▾`;
+        }
+      }
+      setUserNameOnHeader();
+
+      // Fetch data lokasi & update dashboard stat
+      async function loadLokasiDashboard() {
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/locations",
+          {
+            headers: { Authorization: "Bearer " + token },
+          }
+        );
+        const data = await res.json();
+        allLokasi = Array.isArray(data) ? data : [];
+        updateStatCards(allLokasi);
+        renderLokasi();
+      }
+
+      // Update stat cards (Total, Lengkap, Belum Lengkap)
+      function updateStatCards(lokasiList) {
+        let total = lokasiList.length;
+        let lengkap = 0;
+        let belum = 0;
+        lokasiList.forEach((lokasi) => {
+          let isCompleted =
+            lokasi.location_status &&
+            lokasi.location_status.length > 0 &&
+            (lokasi.location_status[0].status === "completed" ||
+              lokasi.location_status[0].status === "lengkap");
+          if (isCompleted) lengkap++;
+          else belum++;
+        });
+        document.getElementById("total_lokasi").innerText = total;
+        document.getElementById("lokasi_completed").innerText = lengkap;
+        document.getElementById("lokasi_belum").innerText = belum;
+      }
+
+      // Render lokasi (with filter)
+      function renderLokasi(keyword = "") {
+        const tbody = document.getElementById("dataLokasi");
+        let html = "";
+        const filter = (keyword || "").trim().toLowerCase();
+        let filtered = allLokasi;
+        if (filter.length > 0) {
+          filtered = allLokasi.filter((l) =>
+            l.nama_lokasi.toLowerCase().includes(filter)
+          );
+        }
+        if (filtered.length > 0) {
+          filtered.forEach((lokasi, i) => {
+            let isCompleted =
+              lokasi.location_status &&
+              lokasi.location_status.length > 0 &&
+              (lokasi.location_status[0].status === "completed" ||
+                lokasi.location_status[0].status === "lengkap");
+            let statusLabel = isCompleted ? "LENGKAP" : "BELUM LENGKAP";
+            let statusClass = isCompleted ? "lengkap" : "belum";
+            html += `<tr>
+              <td>${i + 1}</td>
+              <td>${lokasi.nama_lokasi}</td>
+              <td><span class="badge status ${statusClass}">${statusLabel}</span></td>
+            </tr>`;
+          });
+        } else {
+          html = `<tr><td colspan="3" style="text-align:center;">Belum ada data lokasi</td></tr>`;
+        }
+        tbody.innerHTML = html;
+      }
+
+      // Search event (live filter + update card stats juga)
+      document
+        .getElementById("searchLokasi")
+        .addEventListener("input", function () {
+          const filter = this.value;
+          renderLokasi(filter);
+          // Update card stat sesuai hasil filter
+          if (filter.trim() === "") {
+            updateStatCards(allLokasi);
+          } else {
+            // Update stat sesuai yang terfilter
+            const filtered = allLokasi.filter((l) =>
+              l.nama_lokasi.toLowerCase().includes(filter.trim().toLowerCase())
+            );
+            updateStatCards(filtered);
+          }
+        });
+
+      loadLokasiDashboard();
+
+      // ------------ PROFILE MODAL LOGIC -------------
+      function openProfileModal() {
+        document.getElementById("profileModal").style.display = "flex";
+        fetchProfileData();
+      }
+      function closeProfileModal() {
+        document.getElementById("profileModal").style.display = "none";
+        document.getElementById("profileMsg").innerText = "";
+        document.getElementById("changePassMsg").innerText = "";
+        document.getElementById("formChangePass").reset();
+      }
+      document.getElementById("userProfileBtn").onclick = openProfileModal;
+
+      // Fetch data akun
+      async function fetchProfileData() {
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/account/me",
+          {
+            headers: { Authorization: "Bearer " + token },
+          }
+        );
+        const data = await res.json();
+        document.getElementById("profileNama").value = data.nama || "";
+        document.getElementById("profileUsername").value = data.username || "";
+        document.getElementById("profileJabatan").value = data.jabatan || "";
+        document.getElementById("profileEmail").value = data.email || "";
+      }
+
+      // Update profile
+      document.getElementById("formProfile").onsubmit = async function (e) {
+        e.preventDefault();
+        const nama = document.getElementById("profileNama").value;
+        const jabatan = document.getElementById("profileJabatan").value;
+        const email = document.getElementById("profileEmail").value;
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/account/me",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ nama, jabatan, email }),
+          }
+        );
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("profileMsg").style.color = "green";
+          document.getElementById("profileMsg").innerText =
+            "Data berhasil diperbarui.";
+          document.getElementById("userProfileBtn").innerHTML = `👤 ${nama} ▾`;
+        } else {
+          document.getElementById("profileMsg").style.color = "red";
+          document.getElementById("profileMsg").innerText =
+            data.error || "Update gagal.";
+        }
+      };
+
+      // ------------ GANTI PASSWORD LOGIC -------------
+      document.getElementById("formChangePass").onsubmit = async function (e) {
+        e.preventDefault();
+        const old_password = document.getElementById("oldPass").value;
+        const new_password = document.getElementById("newPass").value;
+        const msgDiv = document.getElementById("changePassMsg");
+        msgDiv.style.color = "#444";
+        msgDiv.innerText = "Memproses...";
+
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/account/change-password",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ old_password, new_password }),
+          }
+        );
+        const data = await res.json();
+        if (res.ok) {
+          msgDiv.style.color = "green";
+          msgDiv.innerText = "Password berhasil diubah!";
+          document.getElementById("formChangePass").reset();
+        } else {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = data.error || "Gagal mengganti password.";
+        }
+      };
+
+      window.onclick = function (event) {
+        const modal = document.getElementById("profileModal");
+        if (event.target === modal) {
+          closeProfileModal();
+        }
+      };
+    </script>
+  </body>
+</html>
