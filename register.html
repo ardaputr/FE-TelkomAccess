@@ -140,7 +140,17 @@
             setTimeout(() => (window.location = "login.html"), 1500);
           } else {
             msg.style.color = "red";
-            msg.innerText = data.error || "Registrasi gagal.";
+            // Error handling khusus email/username
+            const errorMsg = (data.error || "").toLowerCase();
+            if (errorMsg.includes("email")) {
+              msg.innerText =
+                "Email sudah terdaftar.\nSilakan gunakan email lain.";
+            } else if (errorMsg.includes("username")) {
+              msg.innerText =
+                "Username sudah terdaftar.\nSilakan gunakan username lain.";
+            } else {
+              msg.innerText = data.error || "Registrasi gagal.";
+            }
           }
         } catch (err) {
           msg.style.color = "red";

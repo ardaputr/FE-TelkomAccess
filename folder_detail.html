@@ -56,7 +56,10 @@
             style="resize: vertical; min-width: 220px"
           ></textarea>
         </form>
-        <p id="msg"></p>
+        <p
+          id="msg-upload"
+          style="margin-bottom: 2px; text-align: center; min-height: 1.4em"
+        ></p>
 
         <!-- FILTER FILE -->
         <div style="margin-bottom: 18px">
@@ -109,6 +112,10 @@
             placeholder="Tulis catatan di sini..."
           ></textarea>
         </form>
+        <p
+          id="msg-note"
+          style="margin-bottom: 2px; text-align: center; min-height: 1.4em"
+        ></p>
 
         <h3>Daftar Catatan</h3>
         <div class="table-responsive">
@@ -172,6 +179,10 @@
             background: #f8fafd;
           "
         ></textarea>
+        <p
+          id="msg-edit-note"
+          style="min-height: 1.3em; text-align: center; margin: 2px 0 4px 0"
+        ></p>
         <div style="display: flex; justify-content: flex-end; gap: 12px">
           <button
             onclick="closeEditNoteModal()"
@@ -285,9 +296,8 @@
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
 
-      let statusData = null; // Simpan status kelengkapan
+      let statusData = null;
 
-      // Helper label
       function niceKey(key) {
         switch (key) {
           case "bact":
@@ -311,7 +321,6 @@
         }
       }
 
-      // Render checklist status
       function renderChecklistStatus(status) {
         if (!status) return "<i>Belum ada status</i>";
         let items = [
@@ -332,8 +341,8 @@
           html += `
             <label style="display:block; margin-bottom:7px;">
               <input type="checkbox" name="${key}" ${checked}
-                     onchange="window.updateChecklistStatus('${key}', this.checked)" 
-                     style="transform:scale(1.3); margin-right:10px;">
+                onchange="window.updateChecklistStatus('${key}', this.checked)" 
+                style="transform:scale(1.3); margin-right:10px;">
               <b>${niceKey(key)}</b>
             </label>`;
         });
@@ -344,7 +353,6 @@
         return html;
       }
 
-      // Event handler update checklist
       window.updateChecklistStatus = async function (key, checked) {
         const patch = {};
         patch[key] = checked;
@@ -377,7 +385,6 @@
         loadDetail();
       };
 
-      // --------- Tabel file & note ----------
       let fileData = [];
       let sortAsc = true;
       let tipeFilter = "";
@@ -389,22 +396,29 @@
               (f) => (f.tipe_file || "").toLowerCase() === tipeFilter
             )
           : fileData;
-        filtered.forEach((f, idx) => {
-          html += `<tr>
-            <td>${idx + 1}</td>
-            <td>${f.tipe_file}</td>
-            <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
-            <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
-            <td>
-              <button onclick="editFile('${f.id}', \`${(
-            f.keterangan || ""
-          ).replace(/`/g, "\\`")}\`)">Edit</button>
-              <button class="danger" onclick="deleteFile('${
-                f.id
-              }')">Hapus</button>
-            </td>
-          </tr>`;
-        });
+        if (filtered.length === 0) {
+          html = `<tr>
+      <td colspan="5" style="text-align:center; color:#888888;">
+        Tidak ada file ditemukan
+      </td>
+    </tr>`;
+        } else {
+          filtered.forEach((f, idx) => {
+            html += `<tr>
+        <td>${idx + 1}</td>
+        <td>${f.tipe_file}</td>
+        <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
+        <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
+        <td>
+          <button onclick="editFile('${f.id}', \`${(f.keterangan || "").replace(
+              /`/g,
+              "\\`"
+            )}\`)">Edit</button>
+          <button class="danger" onclick="deleteFile('${f.id}')">Hapus</button>
+        </td>
+      </tr>`;
+          });
+        }
         document.getElementById("listFile").innerHTML = html;
       }
 
@@ -443,25 +457,30 @@
         fileData = files || [];
         renderFileTable();
 
-        // Notes table
         let nhtml = "";
-        (notes || []).forEach((n, idx) => {
-          nhtml += `<tr>
-            <td>${idx + 1}</td>
-            <td>${n.tipe}</td>
-            <td>${n.isi}</td>
-            <td>
-              <button class="edit-note-btn" data-id="${
-                n.id
-              }" data-isi="${encodeURIComponent(
-            n.isi
-          )}" onclick="showEditNoteModal(this)">Edit</button>
-              <button class="danger" onclick="deleteNote('${
-                n.id
-              }')">Hapus</button>
-            </td>
-          </tr>`;
-        });
+        if (!notes || notes.length === 0) {
+          nhtml = `<tr>
+    <td colspan="4" style="text-align:center; color:#888888;">
+      Tidak ada catatan ditemukan
+    </td>
+  </tr>`;
+        } else {
+          notes.forEach((n, idx) => {
+            nhtml += `<tr>
+      <td>${idx + 1}</td>
+      <td>${n.tipe}</td>
+      <td>${n.isi}</td>
+      <td>
+        <button class="edit-note-btn" data-id="${
+          n.id
+        }" data-isi="${encodeURIComponent(
+              n.isi
+            )}" onclick="showEditNoteModal(this)">Edit</button>
+        <button class="danger" onclick="deleteNote('${n.id}')">Hapus</button>
+      </td>
+    </tr>`;
+          });
+        }
         document.getElementById("listNote").innerHTML = nhtml;
       }
 
@@ -472,40 +491,167 @@
         form.append("location_id", id);
         form.append("tipe_file", document.getElementById("tipe_file").value);
         form.append("keterangan", document.getElementById("keterangan").value);
-        const res = await fetch(
-          "https://be-telkom-access.vercel.app/files/upload",
-          {
-            method: "POST",
-            headers: { Authorization: "Bearer " + token },
-            body: form,
+
+        const msgDiv = document.getElementById("msg-upload");
+        msgDiv.innerText = "Mengunggah file...";
+        msgDiv.style.color = "#666";
+        setTimeout(() => {
+          msgDiv.innerText = "";
+        }, 2000);
+
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/files/upload",
+            {
+              method: "POST",
+              headers: { Authorization: "Bearer " + token },
+              body: form,
+            }
+          );
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Upload file berhasil!";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+
+            document.getElementById("file").value = "";
+            document.getElementById("keterangan").value = "";
+            document.getElementById("tipe_file").selectedIndex = 0;
+          } else {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = data.error || "Upload file gagal.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
           }
-        );
-        const data = await res.json();
-        document.getElementById("msg").innerText = data.error
-          ? data.error
-          : "Upload sukses";
-        loadDetail();
+          loadDetail();
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal upload. Cek koneksi/server.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
+        }
       };
 
       document.getElementById("noteForm").onsubmit = async function (e) {
         e.preventDefault();
-        const res = await fetch("https://be-telkom-access.vercel.app/notes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({
-            location_id: id,
-            tipe: document.getElementById("tipe_note").value,
-            isi: document.getElementById("isi_note").value,
-          }),
-        });
-        document.getElementById("isi_note").value = "";
-        loadDetail();
+        const msgDiv = document.getElementById("msg-note");
+        msgDiv.innerText = "";
+        try {
+          const res = await fetch("https://be-telkom-access.vercel.app/notes", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({
+              location_id: id,
+              tipe: document.getElementById("tipe_note").value,
+              isi: document.getElementById("isi_note").value,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Catatan berhasil ditambahkan.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+
+            document.getElementById("isi_note").value = "";
+          } else {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = data.error || "Gagal menambah catatan.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          }
+          loadDetail();
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal terhubung ke server.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
+        }
       };
 
-      // --------- Modal Edit File (multiline textarea) ----------
+      // Modal Edit Note
+      let editingNoteId = null;
+      window.showEditNoteModal = function (btn) {
+        editingNoteId = btn.getAttribute("data-id");
+        const oldIsi = decodeURIComponent(btn.getAttribute("data-isi") || "");
+        document.getElementById("modalEditIsi").value = oldIsi;
+        document.getElementById("modalEditNote").style.display = "flex";
+        document.getElementById("modalEditIsi").focus();
+        document.getElementById("msg-edit-note").innerText = "";
+      };
+      window.closeEditNoteModal = function () {
+        document.getElementById("modalEditNote").style.display = "none";
+        editingNoteId = null;
+      };
+      document.getElementById("modalEditSimpanBtn").onclick =
+        async function () {
+          const isi = document.getElementById("modalEditIsi").value;
+          if (!editingNoteId) return;
+          const msgDiv = document.getElementById("msg-edit-note");
+          if (!msgDiv) return;
+          msgDiv.innerText = "Memproses...";
+          msgDiv.style.color = "#222";
+
+          try {
+            const res = await fetch(
+              `https://be-telkom-access.vercel.app/notes/${editingNoteId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + token,
+                },
+                body: JSON.stringify({ isi }),
+              }
+            );
+            if (res.ok) {
+              msgDiv.style.color = "#22c55e";
+              msgDiv.innerText = "Catatan berhasil diperbarui.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+                closeEditNoteModal();
+                loadDetail();
+              }, 2000);
+            } else {
+              msgDiv.style.color = "red";
+              msgDiv.innerText = "Gagal memperbarui catatan.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+              }, 2000);
+            }
+          } catch (err) {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = "Gagal terhubung ke server.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          }
+        };
+
+      window.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") closeEditNoteModal();
+      });
+
+      window.deleteNote = function (noteId) {
+        if (confirm("Yakin hapus catatan ini?")) {
+          fetch(`https://be-telkom-access.vercel.app/notes/${noteId}`, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + token },
+          }).then(loadDetail);
+        }
+      };
+
+      // Modal Edit File
       let editingFileId = null;
       window.editFile = function (fileId, oldKet) {
         editingFileId = fileId;
@@ -521,76 +667,46 @@
         async function () {
           const ket = document.getElementById("modalEditKetFile").value;
           if (!editingFileId) return;
-          await fetch(
-            `https://be-telkom-access.vercel.app/files/${editingFileId}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify({ keterangan: ket }),
+          const msgDiv = document.getElementById("msg-upload");
+          msgDiv.innerText = "Memproses...";
+          try {
+            const res = await fetch(
+              `https://be-telkom-access.vercel.app/files/${editingFileId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + token,
+                },
+                body: JSON.stringify({ keterangan: ket }),
+              }
+            );
+            if (res.ok) {
+              msgDiv.style.color = "#22c55e";
+              msgDiv.innerText = "Keterangan file berhasil diperbarui.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+              }, 2000);
+            } else {
+              msgDiv.style.color = "red";
+              msgDiv.innerText = "Gagal memperbarui keterangan file.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+              }, 2000);
             }
-          );
-          closeEditFileModal();
-          loadDetail();
+            closeEditFileModal();
+            loadDetail();
+          } catch (err) {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = "Gagal terhubung ke server.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          }
         };
       window.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape") closeEditFileModal();
       });
-
-      window.deleteFile = function (fileId) {
-        if (confirm("Yakin hapus file ini?")) {
-          fetch(`https://be-telkom-access.vercel.app/files/${fileId}`, {
-            method: "DELETE",
-            headers: { Authorization: "Bearer " + token },
-          }).then(loadDetail);
-        }
-      };
-
-      // --------- Modal Edit Note (Multiline) ----------
-      let editingNoteId = null;
-      window.showEditNoteModal = function (btn) {
-        editingNoteId = btn.getAttribute("data-id");
-        const oldIsi = decodeURIComponent(btn.getAttribute("data-isi") || "");
-        document.getElementById("modalEditIsi").value = oldIsi;
-        document.getElementById("modalEditNote").style.display = "flex";
-        document.getElementById("modalEditIsi").focus();
-      };
-      window.closeEditNoteModal = function () {
-        document.getElementById("modalEditNote").style.display = "none";
-        editingNoteId = null;
-      };
-      document.getElementById("modalEditSimpanBtn").onclick =
-        async function () {
-          const isi = document.getElementById("modalEditIsi").value;
-          if (!editingNoteId) return;
-          await fetch(
-            `https://be-telkom-access.vercel.app/notes/${editingNoteId}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify({ isi }),
-            }
-          );
-          closeEditNoteModal();
-          loadDetail();
-        };
-      window.addEventListener("keydown", function (ev) {
-        if (ev.key === "Escape") closeEditNoteModal();
-      });
-
-      window.deleteNote = function (noteId) {
-        if (confirm("Yakin hapus catatan ini?")) {
-          fetch(`https://be-telkom-access.vercel.app/notes/${noteId}`, {
-            method: "DELETE",
-            headers: { Authorization: "Bearer " + token },
-          }).then(loadDetail);
-        }
-      };
 
       loadDetail();
     </script>

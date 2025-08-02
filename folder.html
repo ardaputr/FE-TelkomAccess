@@ -5,6 +5,43 @@
     <title>Folder Lokasi</title>
     <link rel="stylesheet" href="style/folder.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      /* Simple notification style, adjust as needed */
+      .notif {
+        min-height: 1.4em;
+        padding: 9px 22px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        display: inline-block;
+        font-weight: 500;
+        font-size: 1em;
+        box-shadow: 0 3px 12px rgba(60, 90, 140, 0.07);
+        text-align: center;
+        transition: opacity 0.3s;
+      }
+      .notif.success {
+        background: #defbe6;
+        color: #157a27;
+        border: 1px solid #94e7b3;
+      }
+      .notif.error {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #ef4444;
+      }
+      .notif.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .notif.show {
+        opacity: 1;
+      }
+      .not-found-message {
+        text-align: center;
+        color: #888;
+        padding: 16px 0;
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard-container">
@@ -34,6 +71,8 @@
       <main>
         <div class="folder-card">
           <h2>Daftar Folder Lokasi</h2>
+          <!-- Notifikasi -->
+          <div id="notif" class="notif" style="display: none"></div>
           <div class="data-table-section">
             <div
               class="folder-topbar"
@@ -77,6 +116,11 @@
               </thead>
               <tbody id="listFolder"></tbody>
             </table>
+            <div
+              id="not-found-message"
+              class="not-found-message"
+              style="display: none"
+            ></div>
           </div>
         </div>
       </main>
@@ -146,22 +190,53 @@
       const token = localStorage.getItem("token");
       if (!token) window.location = "login.html";
 
+      // Notif helper
+      function showNotif(msg, type = "success") {
+        const notif = document.getElementById("notif");
+        notif.className =
+          "notif show " + (type === "error" ? "error" : "success");
+        notif.innerText = msg;
+        notif.style.display = "inline-block";
+        setTimeout(() => {
+          notif.classList.remove("show");
+          notif.classList.add("hide");
+        }, 1700);
+        setTimeout(() => {
+          notif.style.display = "none";
+          notif.className = "notif";
+          notif.innerText = "";
+        }, 2200);
+      }
+
       // Data folder global untuk filtering
       let allFolders = [];
 
       // Buat folder
       document.getElementById("buatFolder").onsubmit = async function (e) {
         e.preventDefault();
-        await fetch("https://be-telkom-access.vercel.app/locations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({
-            nama_lokasi: document.getElementById("nama_lokasi").value,
-          }),
-        });
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/locations",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({
+                nama_lokasi: document.getElementById("nama_lokasi").value,
+              }),
+            }
+          );
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            showNotif("Folder lokasi berhasil dibuat!", "success");
+          } else {
+            showNotif(data.error || "Gagal membuat folder lokasi.", "error");
+          }
+        } catch (err) {
+          showNotif("Gagal terhubung ke server.", "error");
+        }
         document.getElementById("nama_lokasi").value = "";
         loadFolders();
       };
@@ -189,17 +264,27 @@
             .getElementById("modalEditFolderInput")
             .value.trim();
           if (!editingFolderId || !nama) return;
-          await fetch(
-            `https://be-telkom-access.vercel.app/locations/${editingFolderId}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-              },
-              body: JSON.stringify({ nama_lokasi: nama }),
+          try {
+            const res = await fetch(
+              `https://be-telkom-access.vercel.app/locations/${editingFolderId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + token,
+                },
+                body: JSON.stringify({ nama_lokasi: nama }),
+              }
+            );
+            const data = await res.json();
+            if (res.ok && !data.error) {
+              showNotif("Nama folder berhasil diubah!", "success");
+            } else {
+              showNotif(data.error || "Gagal mengedit nama folder.", "error");
             }
-          );
+          } catch (err) {
+            showNotif("Gagal terhubung ke server.", "error");
+          }
           closeEditFolderModal();
           loadFolders();
         };
@@ -227,10 +312,22 @@
             "Yakin ingin menghapus folder ini beserta seluruh file dan catatannya?"
           )
         ) {
-          await fetch(`https://be-telkom-access.vercel.app/locations/${id}`, {
-            method: "DELETE",
-            headers: { Authorization: "Bearer " + token },
-          });
+          try {
+            const res = await fetch(
+              `https://be-telkom-access.vercel.app/locations/${id}`,
+              {
+                method: "DELETE",
+                headers: { Authorization: "Bearer " + token },
+              }
+            );
+            if (res.ok) {
+              showNotif("Folder berhasil dihapus!", "success");
+            } else {
+              showNotif("Gagal menghapus folder.", "error");
+            }
+          } catch (err) {
+            showNotif("Gagal terhubung ke server.", "error");
+          }
           loadFolders();
         }
       };
@@ -242,8 +339,16 @@
         const filtered = allFolders.filter((f) =>
           f.nama_lokasi.toLowerCase().includes(keywordLower)
         );
+        const notFoundDiv = document.getElementById("not-found-message");
+        if (filtered.length === 0) {
+          document.getElementById("listFolder").innerHTML = "";
+          notFoundDiv.innerText = "Tidak ada lokasi ditemukan";
+          notFoundDiv.style.display = "block";
+          return;
+        } else {
+          notFoundDiv.style.display = "none";
+        }
         filtered.forEach((f, idx) => {
-          // Sinkron status dari location_status[0].status
           let isCompleted =
             f.location_status &&
             f.location_status.length > 0 &&
@@ -276,14 +381,19 @@
 
       // Load data folder dari API, filter di frontend
       async function loadFolders(keyword = "") {
-        const res = await fetch(
-          "https://be-telkom-access.vercel.app/locations",
-          {
-            headers: { Authorization: "Bearer " + token },
-          }
-        );
-        allFolders = await res.json();
-        renderFolders(keyword);
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/locations",
+            {
+              headers: { Authorization: "Bearer " + token },
+            }
+          );
+          allFolders = await res.json();
+          renderFolders(keyword);
+        } catch (err) {
+          document.getElementById("listFolder").innerHTML =
+            "<tr><td colspan='4'><span style='color:#d32f2f;'>Gagal memuat data folder.</span></td></tr>";
+        }
       }
       loadFolders();
 

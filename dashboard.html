@@ -266,8 +266,13 @@
             </tr>`;
           });
         } else {
-          html = `<tr><td colspan="3" style="text-align:center;">Belum ada data lokasi</td></tr>`;
+          html = `<tr>
+    <td colspan="4" style="text-align:center; color:#888888;">
+      Tidak ada lokasi ditemukan
+    </td>
+  </tr>`;
         }
+
         tbody.innerHTML = html;
       }
 
