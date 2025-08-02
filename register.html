@@ -14,18 +14,104 @@
         <input type="text" id="jabatan" placeholder="Jabatan" required />
         <input type="email" id="email" placeholder="Email" required />
         <input type="text" id="username" placeholder="Username" required />
-        <input type="password" id="password" placeholder="Password" required />
+        <!-- Password + SVG toggle -->
+        <div style="display: flex; align-items: center; position: relative">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+            style="flex: 1; padding-right: 40px"
+          />
+          <span
+            id="togglePwd"
+            tabindex="0"
+            style="
+              position: absolute;
+              right: 12px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              height: 100%;
+            "
+          >
+            <!-- Mata Tertutup SVG -->
+            <svg
+              id="icon-hide"
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17.94 17.94A10.05 10.05 0 0 1 12 19c-5 0-9.27-3.11-11-7.5A11.52 11.52 0 0 1 6.06 6.06M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-5.12M1 1l22 22"
+              />
+            </svg>
+            <!-- Mata Terbuka SVG -->
+            <svg
+              id="icon-show"
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              fill="none"
+              viewBox="0 0 24 24"
+              style="display: none"
+            >
+              <path
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M1 12S5 5 12 5s11 7 11 7-4 7-11 7S1 12 1 12Z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+                stroke="#aaa"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+        </div>
         <button type="submit">Register</button>
         <p>Sudah punya akun? <a href="login.html">Login di sini</a></p>
         <p id="msg" style="margin-top: 12px"></p>
       </form>
     </div>
     <script>
+      // Toggle show/hide password
+      const pwdInput = document.getElementById("password");
+      const togglePwd = document.getElementById("togglePwd");
+      const iconShow = document.getElementById("icon-show");
+      const iconHide = document.getElementById("icon-hide");
+      togglePwd.onclick = function () {
+        if (pwdInput.type === "password") {
+          pwdInput.type = "text";
+          iconShow.style.display = "";
+          iconHide.style.display = "none";
+        } else {
+          pwdInput.type = "password";
+          iconShow.style.display = "none";
+          iconHide.style.display = "";
+        }
+      };
+      togglePwd.onkeydown = function (e) {
+        if (e.key === " " || e.key === "Enter") togglePwd.click();
+      };
+
       document.getElementById("registerForm").onsubmit = async function (e) {
         e.preventDefault();
         const msg = document.getElementById("msg");
-        msg.innerText = ""; // Bersihkan pesan sebelumnya
-        msg.style.color = "#222"; // Reset warna
+        msg.innerText = "";
+        msg.style.color = "#222";
 
         try {
           const res = await fetch(
@@ -49,7 +135,7 @@
           } catch (e) {}
 
           if (res.ok) {
-            msg.style.color = "#22c55e"; // Hijau Tailwind
+            msg.style.color = "#22c55e";
             msg.innerText = "Registrasi berhasil! Silakan login.";
             setTimeout(() => (window.location = "login.html"), 1500);
           } else {

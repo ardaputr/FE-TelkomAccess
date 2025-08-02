@@ -24,7 +24,6 @@
             "
           />
         </div>
-
         <nav>
           <a href="#" class="active">Dashboard</a>
           <a href="folder.html">Kelola Folder</a>
@@ -68,13 +67,21 @@
               placeholder="Cari Nama Lokasi..."
               autocomplete="off"
             />
+            <select id="filterStatus" class="dashboard-filter-status">
+              <option value="">Semua Status</option>
+              <option value="lengkap">Lengkap</option>
+              <option value="belum">Belum Lengkap</option>
+            </select>
           </div>
+
           <table class="data-table">
             <thead>
               <tr>
                 <th>No</th>
                 <th>Nama Lokasi</th>
-                <th>Status</th>
+                <th onclick="sortStatus()" style="cursor: pointer">
+                  Status &#x25B2;&#x25BC;
+                </th>
               </tr>
             </thead>
             <tbody id="dataLokasi">
@@ -194,19 +201,57 @@
         document.getElementById("lokasi_belum").innerText = belum;
       }
 
-      // Render lokasi (with filter)
-      function renderLokasi(keyword = "") {
+      // Sorting Status
+      let sortStatusAsc = true;
+
+      function sortStatus() {
+        let filter = document
+          .getElementById("searchLokasi")
+          .value.trim()
+          .toLowerCase();
+        let filterStatus = document.getElementById("filterStatus").value;
+        let filtered =
+          filter.length > 0
+            ? allLokasi.filter((l) =>
+                l.nama_lokasi.toLowerCase().includes(filter)
+              )
+            : [...allLokasi];
+        if (filterStatus === "lengkap" || filterStatus === "belum") {
+          filtered = filtered.filter((lokasi) => {
+            let isCompleted =
+              lokasi.location_status &&
+              lokasi.location_status.length > 0 &&
+              (lokasi.location_status[0].status === "completed" ||
+                lokasi.location_status[0].status === "lengkap");
+            return filterStatus === "lengkap" ? isCompleted : !isCompleted;
+          });
+        }
+        filtered.sort((a, b) => {
+          const aCompleted =
+            a.location_status &&
+            a.location_status.length > 0 &&
+            (a.location_status[0].status === "completed" ||
+              a.location_status[0].status === "lengkap");
+          const bCompleted =
+            b.location_status &&
+            b.location_status.length > 0 &&
+            (b.location_status[0].status === "completed" ||
+              b.location_status[0].status === "lengkap");
+          if (aCompleted === bCompleted) return 0;
+          return sortStatusAsc ? (aCompleted ? -1 : 1) : aCompleted ? 1 : -1;
+        });
+
+        sortStatusAsc = !sortStatusAsc;
+        renderLokasiTable(filtered);
+        updateStatCards(filtered);
+      }
+
+      // Fungsi render khusus hasil sorting dan filter
+      function renderLokasiTable(lokasiArr) {
         const tbody = document.getElementById("dataLokasi");
         let html = "";
-        const filter = (keyword || "").trim().toLowerCase();
-        let filtered = allLokasi;
-        if (filter.length > 0) {
-          filtered = allLokasi.filter((l) =>
-            l.nama_lokasi.toLowerCase().includes(filter)
-          );
-        }
-        if (filtered.length > 0) {
-          filtered.forEach((lokasi, i) => {
+        if (lokasiArr.length > 0) {
+          lokasiArr.forEach((lokasi, i) => {
             let isCompleted =
               lokasi.location_status &&
               lokasi.location_status.length > 0 &&
@@ -226,22 +271,42 @@
         tbody.innerHTML = html;
       }
 
+      // Render lokasi (with filter)
+      function renderLokasi(keyword = "") {
+        const filter = (keyword || "").trim().toLowerCase();
+        const filterStatus = document.getElementById("filterStatus").value;
+        let filtered = allLokasi;
+        if (filter.length > 0) {
+          filtered = allLokasi.filter((l) =>
+            l.nama_lokasi.toLowerCase().includes(filter)
+          );
+        }
+        if (filterStatus === "lengkap" || filterStatus === "belum") {
+          filtered = filtered.filter((lokasi) => {
+            let isCompleted =
+              lokasi.location_status &&
+              lokasi.location_status.length > 0 &&
+              (lokasi.location_status[0].status === "completed" ||
+                lokasi.location_status[0].status === "lengkap");
+            return filterStatus === "lengkap" ? isCompleted : !isCompleted;
+          });
+        }
+        renderLokasiTable(filtered);
+        updateStatCards(filtered);
+      }
+
+      // Event listener untuk filter status
+      document
+        .getElementById("filterStatus")
+        .addEventListener("change", function () {
+          renderLokasi(document.getElementById("searchLokasi").value);
+        });
+
       // Search event (live filter + update card stats juga)
       document
         .getElementById("searchLokasi")
         .addEventListener("input", function () {
-          const filter = this.value;
-          renderLokasi(filter);
-          // Update card stat sesuai hasil filter
-          if (filter.trim() === "") {
-            updateStatCards(allLokasi);
-          } else {
-            // Update stat sesuai yang terfilter
-            const filtered = allLokasi.filter((l) =>
-              l.nama_lokasi.toLowerCase().includes(filter.trim().toLowerCase())
-            );
-            updateStatCards(filtered);
-          }
+          renderLokasi(this.value);
         });
 
       loadLokasiDashboard();

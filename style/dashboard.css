@@ -458,3 +458,30 @@ hr {
   letter-spacing: 0.5px;
   font-size: 1em;
 }
+
+/* Filter status style */
+.dashboard-filter-status {
+  padding: 0.54em 1.1em;
+  border: 1.4px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 1.01em;
+  background: #f8f9fc;
+  margin-left: 8px;
+  margin-right: 8px;
+  transition: border 0.2s, background 0.18s;
+  outline: none;
+  color: #232d3b;
+  box-sizing: border-box;
+}
+.dashboard-filter-status:focus {
+  border-color: #fc2525;
+  background: #fff;
+}
+@media (max-width: 600px) {
+  .dashboard-filter-status {
+    width: 100%;
+    margin: 7px 0 0 0;
+    font-size: 0.97em;
+    padding: 0.6em 0.6em;
+  }
+}
