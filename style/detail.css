@@ -183,7 +183,7 @@ form button[type="submit"]:hover {
   transform: translateY(-1px) scale(1.04);
 }
 #msg {
-  color: #fc2525;
+  color: #4caf50;
   font-size: 1.02em;
   margin-bottom: 1.1em;
   font-weight: 500;
