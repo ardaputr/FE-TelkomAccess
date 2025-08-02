@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>Register Akun</title>
     <link rel="stylesheet" href="style/register.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body>
     <div class="container">
@@ -16,33 +17,49 @@
         <input type="password" id="password" placeholder="Password" required />
         <button type="submit">Register</button>
         <p>Sudah punya akun? <a href="login.html">Login di sini</a></p>
+        <p id="msg" style="margin-top: 12px"></p>
       </form>
     </div>
-
     <script>
       document.getElementById("registerForm").onsubmit = async function (e) {
         e.preventDefault();
-        const res = await fetch("http://localhost:5000/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nama: document.getElementById("nama").value,
-            jabatan: document.getElementById("jabatan").value,
-            email: document.getElementById("email").value,
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value,
-          }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById("msg").style.color = "green";
-          document.getElementById("msg").innerText =
-            "Registrasi berhasil! Silakan login.";
-          setTimeout(() => (window.location = "login.html"), 1500);
-        } else {
-          document.getElementById("msg").style.color = "red";
-          document.getElementById("msg").innerText =
-            data.error || "Registrasi gagal";
+        const msg = document.getElementById("msg");
+        msg.innerText = ""; // Bersihkan pesan sebelumnya
+        msg.style.color = "#222"; // Reset warna
+
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/auth/register",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                nama: document.getElementById("nama").value,
+                jabatan: document.getElementById("jabatan").value,
+                email: document.getElementById("email").value,
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value,
+              }),
+            }
+          );
+
+          let data = {};
+          try {
+            data = await res.json();
+          } catch (e) {}
+
+          if (res.ok) {
+            msg.style.color = "#22c55e"; // Hijau Tailwind
+            msg.innerText = "Registrasi berhasil! Silakan login.";
+            setTimeout(() => (window.location = "login.html"), 1500);
+          } else {
+            msg.style.color = "red";
+            msg.innerText = data.error || "Registrasi gagal.";
+          }
+        } catch (err) {
+          msg.style.color = "red";
+          msg.innerText =
+            "Gagal terhubung ke server. Pastikan backend aktif & endpoint benar.";
         }
       };
     </script>
