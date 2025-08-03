@@ -26,7 +26,9 @@
         </div>
         <nav>
           <a href="dashboard.html">Dashboard</a>
-          <a href="folder.html" class="active">Kelola Folder</a>
+          <a href="folder.html" class="active">Folder Lokasi</a>
+          <a href="folder_approve.html">Folder Approve</a>
+          <a href="login.html" onclick="logout()">Logout</a>
         </nav>
       </aside>
       <!-- Main Content -->
@@ -35,8 +37,7 @@
         <h2 id="namalokasi">...</h2>
         <h3>Status Kelengkapan</h3>
         <div id="statusChecklist"></div>
-
-        <h3>Upload File ke Folder</h3>
+        <h3 id="uploadTitle">Upload File ke Folder</h3>
         <form id="uploadForm" enctype="multipart/form-data">
           <input type="file" id="file" name="file" required />
           <select id="tipe_file" name="tipe_file" required>
@@ -96,12 +97,13 @@
             <tbody id="listFile"></tbody>
           </table>
         </div>
-        <h3>Catatan</h3>
+        <h3 id="catatanTitle">Catatan</h3>
         <form id="noteForm" class="note-form-modern">
           <div class="note-form-top">
             <select id="tipe_note">
               <option value="laporan_harian">Laporan Harian</option>
-              <option value="kekurangan">Kekurangan</option>
+              <option value="Revisi">Revisi</option>
+              <option value="Catatan">Catatan</option>
             </select>
             <button type="submit" id="btnTambahCatatan">Tambah Catatan</button>
           </div>
@@ -292,9 +294,21 @@
 
     <script>
       const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("role");
       if (!token) window.location = "login.html";
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
+
+      // HIDE FORM & TITLE UNTUK TIF
+      document.addEventListener("DOMContentLoaded", function () {
+        if (userRole === "tif") {
+          document.getElementById("uploadForm").style.display = "none";
+          document.getElementById("uploadTitle").style.display = "none";
+          document.getElementById("noteForm").style.display = "none";
+          document.getElementById("catatanTitle").style.display = "none";
+          // Disable semua aksi edit file & catatan (hanya di renderTable & renderNoteTable nanti)
+        }
+      });
 
       let statusData = null;
 
@@ -334,26 +348,55 @@
           "foto",
         ];
         let completed = true;
-        let html = "<form id='formChecklistStatus'>";
-        items.forEach((key) => {
-          let checked = status[key] ? "checked" : "";
-          if (!status[key]) completed = false;
-          html += `
-            <label style="display:block; margin-bottom:7px;">
-              <input type="checkbox" name="${key}" ${checked}
-                onchange="window.updateChecklistStatus('${key}', this.checked)" 
-                style="transform:scale(1.3); margin-right:10px;">
-              <b>${niceKey(key)}</b>
-            </label>`;
-        });
-        html += "</form>";
-        html += completed
-          ? `<span style="background:#27ae60;color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">LENGKAP</span>`
-          : `<span style="background:#e74c3c;color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">BELUM LENGKAP</span>`;
+        let html = "";
+
+        if (userRole === "tif") {
+          html += "<ul style='margin:0;padding:0 0 0 18px'>";
+          items.forEach((key, idx) => {
+            let checked = status[key];
+            if (!checked) completed = false;
+            html += `<li style="${
+              key === "foto" ? "margin-bottom:18px;" : ""
+            }"><b>${niceKey(key)}</b>: 
+        <span style="color:${
+          checked ? "#15803d" : "#e11d48"
+        }; font-weight:600;">
+          ${checked ? "✅" : "❌"}
+        </span>
+      </li>`;
+          });
+          html += "</ul>";
+        } else {
+          html += "<form id='formChecklistStatus'>";
+          items.forEach((key, idx) => {
+            let checked = status[key] ? "checked" : "";
+            if (!status[key]) completed = false;
+            html += `
+        <label style="display:block; margin-bottom:7px;${
+          key === "foto" ? "margin-bottom:18px;" : ""
+        }">
+          <input type="checkbox" name="${key}" ${checked}
+            onchange="window.updateChecklistStatus('${key}', this.checked)" 
+            style="transform:scale(1.3); margin-right:10px;">
+          <b>${niceKey(key)}</b>
+        </label>`;
+          });
+          html += "</form>";
+        }
+        html += `
+    <div style="margin-top:12px;">
+      <span style="background:${
+        completed ? "#27ae60" : "#e74c3c"
+      };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
+        ${completed ? "LENGKAP" : "BELUM LENGKAP"}
+      </span>
+    </div>
+  `;
         return html;
       }
 
       window.updateChecklistStatus = async function (key, checked) {
+        if (userRole === "tif") return; // Prevent tif from updating
         const patch = {};
         patch[key] = checked;
         const allKeys = [
@@ -410,11 +453,16 @@
         <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
         <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
         <td>
-          <button onclick="editFile('${f.id}', \`${(f.keterangan || "").replace(
-              /`/g,
-              "\\`"
-            )}\`)">Edit</button>
-          <button class="danger" onclick="deleteFile('${f.id}')">Hapus</button>
+          ${
+            userRole === "tif"
+              ? ""
+              : `<button onclick="editFile('${f.id}', \`${(
+                  f.keterangan || ""
+                ).replace(/`/g, "\\`")}\`)">Edit</button>
+                <button class="danger" onclick="deleteFile('${
+                  f.id
+                }')">Hapus</button>`
+          }
         </td>
       </tr>`;
           });
@@ -471,12 +519,18 @@
       <td>${n.tipe}</td>
       <td>${n.isi}</td>
       <td>
-        <button class="edit-note-btn" data-id="${
-          n.id
-        }" data-isi="${encodeURIComponent(
-              n.isi
-            )}" onclick="showEditNoteModal(this)">Edit</button>
-        <button class="danger" onclick="deleteNote('${n.id}')">Hapus</button>
+        ${
+          userRole === "tif"
+            ? ""
+            : `<button class="edit-note-btn" data-id="${
+                n.id
+              }" data-isi="${encodeURIComponent(
+                n.isi
+              )}" onclick="showEditNoteModal(this)">Edit</button>
+              <button class="danger" onclick="deleteNote('${
+                n.id
+              }')">Hapus</button>`
+        }
       </td>
     </tr>`;
           });
@@ -485,6 +539,10 @@
       }
 
       document.getElementById("uploadForm").onsubmit = async function (e) {
+        if (userRole === "tif") {
+          alert("Akun TIF tidak diizinkan upload file.");
+          return false;
+        }
         e.preventDefault();
         let form = new FormData();
         form.append("file", document.getElementById("file").files[0]);
@@ -495,9 +553,6 @@
         const msgDiv = document.getElementById("msg-upload");
         msgDiv.innerText = "Mengunggah file...";
         msgDiv.style.color = "#666";
-        setTimeout(() => {
-          msgDiv.innerText = "";
-        }, 2000);
 
         try {
           const res = await fetch(
@@ -537,6 +592,10 @@
       };
 
       document.getElementById("noteForm").onsubmit = async function (e) {
+        if (userRole === "tif") {
+          alert("Akun TIF tidak diizinkan menambah catatan.");
+          return false;
+        }
         e.preventDefault();
         const msgDiv = document.getElementById("msg-note");
         msgDiv.innerText = "";
@@ -643,6 +702,7 @@
       });
 
       window.deleteNote = function (noteId) {
+        if (userRole === "tif") return;
         if (confirm("Yakin hapus catatan ini?")) {
           fetch(`https://be-telkom-access.vercel.app/notes/${noteId}`, {
             method: "DELETE",
@@ -654,6 +714,7 @@
       // Modal Edit File
       let editingFileId = null;
       window.editFile = function (fileId, oldKet) {
+        if (userRole === "tif") return;
         editingFileId = fileId;
         document.getElementById("modalEditKetFile").value = oldKet || "";
         document.getElementById("modalEditFile").style.display = "flex";
@@ -665,6 +726,7 @@
       };
       document.getElementById("modalEditFileSimpanBtn").onclick =
         async function () {
+          if (userRole === "tif") return;
           const ket = document.getElementById("modalEditKetFile").value;
           if (!editingFileId) return;
           const msgDiv = document.getElementById("msg-upload");

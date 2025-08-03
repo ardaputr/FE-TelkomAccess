@@ -2,34 +2,33 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <title>Login</title>
-    <link rel="stylesheet" href="style/login.css" />
+    <title>Login TIF</title>
+    <link rel="stylesheet" href="style/login_tif.css" />
     <style>
-      /* Tambahan agar link TIF ada di pojok kanan atas */
-      .tif-login-link {
+      .back-main-login {
         position: fixed;
         top: 14px;
-        right: 20px;
+        left: 20px;
         z-index: 100;
         background: #fff;
-        color: #fc2525;
+        color: #fc2525; /* Warna teks merah */
         font-weight: 600;
         padding: 8px 18px;
         border-radius: 6px;
-        border: 1px solid #d8e2f1;
+        border: 1px solid #fc2525; /* Border merah */
         box-shadow: 0 2px 12px #0001;
-        text-decoration: none;
+        text-decoration: none !important; /* Hilangkan underline */
         transition: background 0.2s, color 0.2s;
       }
-      .tif-login-link:hover {
+      .back-main-login:hover {
         background: #fc2525; /* Latar belakang merah */
         color: #fff; /* Teks jadi putih */
         border-color: #fc2525;
         text-decoration: none !important; /* Hilangkan underline pada hover */
       }
       @media (max-width: 500px) {
-        .tif-login-link {
-          right: 8px;
+        .back-main-login {
+          left: 8px;
           top: 8px;
           padding: 6px 10px;
           font-size: 0.95em;
@@ -38,10 +37,12 @@
     </style>
   </head>
   <body>
-    <!-- Link login TIF di pojok kanan atas -->
-    <a href="login_tif.html" class="tif-login-link">Login sebagai TIF</a>
+    <!-- Link kembali ke login utama -->
+    <a href="login.html" class="back-main-login"
+      >&larr; Kembali ke Login Admin</a
+    >
     <div class="container">
-      <form id="loginForm" autocomplete="off">
+      <form id="loginTIFForm" autocomplete="off">
         <div class="logo" style="text-align: center; margin-bottom: 0.7rem">
           <img
             src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
@@ -56,8 +57,8 @@
             "
           />
         </div>
-        <input type="text" id="username" placeholder="Username" required />
-        <!-- Wrapper untuk password + icon dalam 1 baris (flex) -->
+        <input type="text" id="username" placeholder="Username TIF" required />
+
         <div style="display: flex; align-items: center; position: relative">
           <input
             type="password"
@@ -66,7 +67,6 @@
             required
             style="flex: 1; padding-right: 40px"
           />
-          <!-- SVG Icon di dalam input (kanan) -->
           <span
             id="togglePwd"
             tabindex="0"
@@ -79,7 +79,6 @@
               height: 100%;
             "
           >
-            <!-- Mata Tertutup SVG -->
             <svg
               id="icon-hide"
               xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +95,6 @@
                 d="M17.94 17.94A10.05 10.05 0 0 1 12 19c-5 0-9.27-3.11-11-7.5A11.52 11.52 0 0 1 6.06 6.06M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-5.12M1 1l22 22"
               />
             </svg>
-            <!-- Mata Terbuka SVG -->
             <svg
               id="icon-show"
               xmlns="http://www.w3.org/2000/svg"
@@ -127,22 +125,20 @@
         </div>
         <button type="submit">Login</button>
         <div id="msg"></div>
-        <center>
-          <div class="register-link">
-            Belum punya akun?
-            <a href="register.html">Register di sini</a>
-          </div>
-        </center>
+        <div style="text-align: center; margin-top: 1em">
+          Belum punya akun?
+          <a href="register_tif.html">Register TIF di sini</a>
+        </div>
       </form>
     </div>
     <script>
       const msg = document.getElementById("msg");
-      document.getElementById("loginForm").onsubmit = async function (e) {
+      document.getElementById("loginTIFForm").onsubmit = async function (e) {
         e.preventDefault();
         msg.innerText = "Memproses...";
         msg.style.color = "#222";
         const res = await fetch(
-          "https://be-telkom-access.vercel.app/auth/login",
+          "https://be-telkom-access.vercel.app/tif/login",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -155,6 +151,10 @@
         const data = await res.json();
         if (res.ok && data.token) {
           localStorage.setItem("token", data.token);
+          // Simpan tipe/role user ke localStorage
+          if (data.user && data.user.tipe) {
+            localStorage.setItem("role", data.user.tipe.toLowerCase());
+          }
           window.location = "dashboard.html";
         } else {
           msg.style.color = "red";
@@ -174,7 +174,7 @@
         }
       };
 
-      // Show/hide password logic dengan SVG
+      // Show/hide password logic
       const pwdInput = document.getElementById("password");
       const togglePwd = document.getElementById("togglePwd");
       const iconShow = document.getElementById("icon-show");

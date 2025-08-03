@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Detail Folder Approve</title>
+    <link rel="stylesheet" href="style/detail.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      .approve-bottom-box {
+        margin: 38px auto 0 auto;
+        background: #f8fafc;
+        border-radius: 11px;
+        box-shadow: 0 2px 12px rgba(60, 110, 255, 0.06);
+        padding: 24px 20px 18px 20px;
+        max-width: 420px;
+        text-align: center;
+        font-size: 1.08em;
+      }
+      .approve-bottom-box label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .approve-bottom-box input[type="checkbox"] {
+        transform: scale(1.32);
+        margin-right: 8px;
+        accent-color: #1776d2;
+      }
+      .approve-badge {
+        display: inline-block;
+        margin-top: 7px;
+        background: #1abc5c;
+        color: #fff;
+        font-weight: 700;
+        border-radius: 11px;
+        padding: 7px 22px;
+        font-size: 1em;
+        letter-spacing: 1px;
+      }
+      .approve-msg {
+        min-height: 1.3em;
+        margin: 10px 0 0 0;
+        color: #0e5195;
+        font-size: 0.98em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="detail-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img
+            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
+            alt="Logo"
+            class="logo-icon"
+            style="
+              height: 50px;
+              max-width: 250px;
+              object-fit: contain;
+              margin-right: 9px;
+              vertical-align: middle;
+            "
+          />
+        </div>
+        <nav>
+          <a href="dashboard.html">Dashboard</a>
+          <a href="folder.html">Folder Lokasi</a>
+          <a href="folder_approve.html" class="active">Folder Approve</a>
+          <a href="login.html" onclick="logout()">Logout</a>
+        </nav>
+      </aside>
+      <!-- Main Content -->
+      <main>
+        <a href="folder_approve.html">&larr; Kembali ke Folder Approve</a>
+        <h2 id="namalokasi">...</h2>
+        <h3>Status Kelengkapan</h3>
+        <div id="statusChecklist"></div>
+
+        <h3>Daftar File</h3>
+        <div class="table-responsive">
+          <table class="data-table" id="tableFile">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Tipe File</th>
+                <th>Nama File</th>
+                <th>Keterangan</th>
+                <th>Download</th>
+              </tr>
+            </thead>
+            <tbody id="listFile"></tbody>
+          </table>
+        </div>
+        <h3 id="judulCatatan">Catatan</h3>
+        <form id="noteForm" class="note-form-modern">
+          <div class="note-form-top">
+            <select id="tipe_note">
+              <option value="revisi">Catatan</option>
+              <option value="revisi">Revisi</option>
+            </select>
+            <button type="submit" id="btnTambahCatatan">Tambah Catatan</button>
+          </div>
+          <textarea
+            id="isi_note"
+            required
+            rows="3"
+            placeholder="Tulis catatan revisi di sini..."
+          ></textarea>
+        </form>
+        <p
+          id="msg-note"
+          style="margin-bottom: 2px; text-align: center; min-height: 1.4em"
+        ></p>
+
+        <h3>Daftar Catatan</h3>
+        <div class="table-responsive">
+          <table class="data-table" id="tableNote">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Tipe</th>
+                <th>Isi</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="listNote"></tbody>
+          </table>
+        </div>
+
+        <!-- APPROVE CHECKLIST BOTTOM SECTION -->
+        <div
+          id="approve-section"
+          class="approve-bottom-box"
+          style="display: none"
+        >
+          <label>
+            <input type="checkbox" id="approve-check" />
+            Checklist Approve Folder Lokasi
+          </label>
+          <button
+            id="approve-btn"
+            style="
+              background: #1776d2;
+              color: #fff;
+              padding: 9px 26px;
+              font-weight: 600;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+            "
+            disabled
+          >
+            Approve
+          </button>
+          <div class="approve-msg" id="approve-msg"></div>
+          <div id="approve-badge-wrap"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- MODAL EDIT NOTE -->
+    <div
+      id="modalEditNote"
+      style="
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(44, 54, 74, 0.22);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          max-width: 440px;
+          width: 98vw;
+          border-radius: 13px;
+          box-shadow: 0 8px 40px rgba(64, 81, 137, 0.17);
+          padding: 28px 22px 20px 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        "
+      >
+        <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
+          Edit Catatan
+        </div>
+        <textarea
+          id="modalEditIsi"
+          rows="6"
+          style="
+            width: 100%;
+            resize: vertical;
+            padding: 11px;
+            font-size: 1.05em;
+            border-radius: 7px;
+            border: 1.2px solid #d3dcff;
+            background: #f8fafd;
+          "
+        ></textarea>
+        <p
+          id="msg-edit-note"
+          style="min-height: 1.3em; text-align: center; margin: 2px 0 4px 0"
+        ></p>
+        <div style="display: flex; justify-content: flex-end; gap: 12px">
+          <button
+            onclick="closeEditNoteModal()"
+            style="
+              padding: 7px 18px;
+              border-radius: 6px;
+              background: #e5e7eb;
+              color: #333;
+              border: none;
+              font-weight: 500;
+            "
+          >
+            Batal
+          </button>
+          <button
+            id="modalEditSimpanBtn"
+            style="
+              padding: 7px 18px;
+              border-radius: 6px;
+              background: #fc2525;
+              color: #fff;
+              border: none;
+              font-weight: 600;
+            "
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location = "login_tif.html";
+      }
+      const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("role");
+      // 'tif' kalau TIF
+      if (!token) window.location = "login_tif.html";
+      if (userRole !== "tif") {
+        document.getElementById("noteForm").style.display = "none";
+        document.getElementById("judulCatatan").style.display = "none";
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+
+      let APPROVED = false;
+
+      function renderStatus(status) {
+        if (!status) return "<i>Belum ada status</i>";
+        let items = [
+          "bact",
+          "baut",
+          "boq",
+          "maincore",
+          "hasil_ukur",
+          "file_kml",
+          "file_dwg",
+          "foto",
+        ];
+        let html = "<ul style='margin:0;padding:0 0 0 18px'>";
+        let completed = true;
+        items.forEach((key) => {
+          const done = status[key];
+          if (!done) completed = false;
+          html += `<li><b>${key.replace("_", " ").toUpperCase()}</b>: 
+            <span style="color:${
+              done ? "#15803d" : "#e11d48"
+            }; font-weight:600;">
+              ${done ? "✅" : "❌"}
+            </span>
+          </li>`;
+        });
+        html += "</ul>";
+        html += `<div style="margin-top:7px;">
+          <span style="background:${
+            completed ? "#27ae60" : "#e74c3c"
+          };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
+            ${completed ? "LENGKAP" : "BELUM LENGKAP"}
+          </span>
+        </div>`;
+        return html;
+      }
+
+      let fileData = [];
+      function renderFileTable() {
+        let html = "";
+        if (!fileData || fileData.length === 0) {
+          html = `<tr>
+            <td colspan="5" style="text-align:center; color:#888888;">
+              Tidak ada file ditemukan
+            </td>
+          </tr>`;
+        } else {
+          fileData.forEach((f, idx) => {
+            html += `<tr>
+              <td>${idx + 1}</td>
+              <td>${f.tipe_file}</td>
+              <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
+              <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
+              <td><a href="${
+                f.url
+              }" target="_blank" style="color:#1776d2;font-weight:600;">Download</a></td>
+            </tr>`;
+          });
+        }
+        document.getElementById("listFile").innerHTML = html;
+      }
+
+      // ================== APPROVE SECTION ==================
+      // APPROVE SECTION
+      async function renderApproveSection(approved) {
+        const section = document.getElementById("approve-section");
+        const badge = document.getElementById("approve-badge-wrap");
+        const check = document.getElementById("approve-check");
+        const btn = document.getElementById("approve-btn");
+        const msg = document.getElementById("approve-msg");
+
+        if (userRole === "tif") {
+          section.style.display = "";
+          check.checked = approved;
+          check.disabled = false;
+          btn.disabled = true;
+          btn.innerText = approved ? "Batalkan Approve" : "Approve";
+          //   badge.innerHTML = approved
+          //     ? `<span class="approve-badge">Approved &#10004;</span>`
+          //     : "";
+          msg.innerText = "";
+        } else {
+          section.style.display = "none";
+        }
+      }
+
+      // Enable tombol approve jika user ubah centang
+      document.getElementById("approve-check").onchange = function () {
+        const btn = document.getElementById("approve-btn");
+        btn.disabled = false;
+      };
+
+      // Toggle approve/unapprove
+      document.getElementById("approve-btn").onclick = async function () {
+        this.disabled = true;
+        const msg = document.getElementById("approve-msg");
+        const approved = document.getElementById("approve-check").checked;
+        msg.innerText = approved
+          ? "Menyimpan approve..."
+          : "Membatalkan approve...";
+        try {
+          const res = await fetch(
+            `https://be-telkom-access.vercel.app/locations/${id}/approve`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ approved_tif: approved }),
+            }
+          );
+          if (res.ok) {
+            msg.style.color = "#1abc5c";
+            msg.innerText = approved
+              ? "Berhasil di-Approve!"
+              : "Approve dibatalkan!";
+            setTimeout(loadDetail, 700);
+          } else {
+            msg.style.color = "red";
+            msg.innerText = "Gagal update approve. Coba ulangi.";
+            this.disabled = false;
+          }
+        } catch (err) {
+          msg.style.color = "red";
+          msg.innerText = "Terjadi error koneksi.";
+          this.disabled = false;
+        }
+      };
+
+      // Aktifkan tombol kalau user ubah checkbox
+      document.getElementById("approve-check").onchange = function () {
+        const btn = document.getElementById("approve-btn");
+        btn.disabled = false;
+      };
+
+      // Handler tombol approve (toggle approve/unapprove)
+      document.getElementById("approve-btn").onclick = async function () {
+        this.disabled = true;
+        const msg = document.getElementById("approve-msg");
+        const approved = document.getElementById("approve-check").checked;
+
+        msg.innerText = approved
+          ? "Menyimpan approve..."
+          : "Membatalkan approve...";
+
+        try {
+          const res = await fetch(
+            `https://be-telkom-access.vercel.app/locations/${id}/approve`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ approved_tif: approved }),
+            }
+          );
+          if (res.ok) {
+            msg.style.color = "#1abc5c";
+            msg.innerText = approved
+              ? "Berhasil di-Approve!"
+              : "Approve dibatalkan!";
+            setTimeout(loadDetail, 800);
+          } else {
+            msg.style.color = "red";
+            msg.innerText = "Gagal update approve. Coba ulangi.";
+            this.disabled = false;
+          }
+        } catch (err) {
+          msg.style.color = "red";
+          msg.innerText = "Terjadi error koneksi.";
+          this.disabled = false;
+        }
+      };
+
+      // =============== Load Data ======================
+      // =============== Load Data ======================
+      async function loadDetail() {
+        // Ambil detail lokasi, file, dan status (tidak ambil notes lagi)
+        const res = await fetch(
+          `https://be-telkom-access.vercel.app/locations/${id}`,
+          {
+            headers: { Authorization: "Bearer " + token },
+          }
+        );
+        const { lokasi, files, status } = await res.json();
+        const APPROVED = !!lokasi.approved_tif;
+        document.getElementById("namalokasi").innerText = lokasi.nama_lokasi;
+        document.getElementById("statusChecklist").innerHTML =
+          renderStatus(status);
+
+        fileData = files || [];
+        renderFileTable();
+        renderApproveSection(APPROVED);
+
+        // Ambil notes_tif dari endpoint baru
+        const notesRes = await fetch(
+          `https://be-telkom-access.vercel.app/notes_tif?location_id=${id}`,
+          {
+            headers: { Authorization: "Bearer " + token },
+          }
+        );
+        const notes = await notesRes.json();
+
+        let nhtml = "";
+        if (!notes || notes.length === 0) {
+          nhtml = `<tr>
+    <td colspan="4" style="text-align:center; color:#888888;">
+      Tidak ada catatan ditemukan
+    </td>
+  </tr>`;
+        } else {
+          notes.forEach((n, idx) => {
+            nhtml += `<tr>
+      <td>${idx + 1}</td>
+      <td>${n.tipe}</td>
+      <td>${n.isi}</td>
+      <td>
+        ${
+          userRole === "tif"
+            ? `<button class="edit-note-btn" data-id="${
+                n.id
+              }" data-isi="${encodeURIComponent(
+                n.isi
+              )}" onclick="showEditNoteModal(this)">Edit</button>
+            <button class="danger" onclick="deleteNote('${
+              n.id
+            }')">Hapus</button>`
+            : ""
+        }
+      </td>
+    </tr>`;
+          });
+        }
+        document.getElementById("listNote").innerHTML = nhtml;
+      }
+
+      loadDetail();
+
+      // =========== Catatan & Modal Catatan ===========
+      document.getElementById("noteForm").onsubmit = async function (e) {
+        e.preventDefault();
+        const msgDiv = document.getElementById("msg-note");
+        msgDiv.innerText = "";
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/notes_tif",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({
+                location_id: id,
+                tipe: document.getElementById("tipe_note").value,
+                isi: document.getElementById("isi_note").value,
+              }),
+            }
+          );
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Catatan berhasil ditambahkan.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+            document.getElementById("isi_note").value = "";
+          } else {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = data.error || "Gagal menambah catatan.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          }
+          loadDetail();
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal terhubung ke server.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
+        }
+      };
+
+      // Modal Edit Note
+      let editingNoteId = null;
+      window.showEditNoteModal = function (btn) {
+        editingNoteId = btn.getAttribute("data-id");
+        const oldIsi = decodeURIComponent(btn.getAttribute("data-isi") || "");
+        document.getElementById("modalEditIsi").value = oldIsi;
+        document.getElementById("modalEditNote").style.display = "flex";
+        document.getElementById("modalEditIsi").focus();
+        document.getElementById("msg-edit-note").innerText = "";
+      };
+      window.closeEditNoteModal = function () {
+        document.getElementById("modalEditNote").style.display = "none";
+        editingNoteId = null;
+      };
+      document.getElementById("modalEditSimpanBtn").onclick =
+        async function () {
+          const isi = document.getElementById("modalEditIsi").value;
+          if (!editingNoteId) return;
+          const msgDiv = document.getElementById("msg-edit-note");
+          if (!msgDiv) return;
+          msgDiv.innerText = "Memproses...";
+          msgDiv.style.color = "#222";
+
+          try {
+            const res = await fetch(
+              `https://be-telkom-access.vercel.app/notes_tif/${editingNoteId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + token,
+                },
+                body: JSON.stringify({ isi }),
+              }
+            );
+            if (res.ok) {
+              msgDiv.style.color = "#22c55e";
+              msgDiv.innerText = "Catatan berhasil diperbarui.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+                closeEditNoteModal();
+                loadDetail();
+              }, 2000);
+            } else {
+              msgDiv.style.color = "red";
+              msgDiv.innerText = "Gagal memperbarui catatan.";
+              setTimeout(() => {
+                msgDiv.innerText = "";
+              }, 2000);
+            }
+          } catch (err) {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = "Gagal terhubung ke server.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          }
+        };
+      window.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") closeEditNoteModal();
+      });
+      window.deleteNote = function (noteId) {
+        if (confirm("Yakin hapus catatan ini?")) {
+          fetch(`https://be-telkom-access.vercel.app/notes_tif/${noteId}`, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + token },
+          }).then(loadDetail);
+        }
+      };
+    </script>
+  </body>
+</html>

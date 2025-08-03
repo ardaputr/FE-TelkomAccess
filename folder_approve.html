@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Folder Approve (TIF)</title>
+    <link rel="stylesheet" href="style/folder_approve.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img
+            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
+            alt="Logo"
+            class="logo-icon"
+            style="
+              height: 50px;
+              max-width: 250px;
+              object-fit: contain;
+              margin-right: 9px;
+              vertical-align: middle;
+            "
+          />
+        </div>
+        <nav>
+          <a href="dashboard.html">Dashboard</a>
+          <a href="folder.html">Folder Lokasi</a>
+          <a href="folder_approve.html" class="active">Folder Approve</a>
+          <a href="login.html" onclick="logout()">Logout</a>
+        </nav>
+      </aside>
+      <!-- MAIN CONTENT -->
+      <main style="flex: 1">
+        <div class="container">
+          <h2>Daftar Folder Lokasi</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Lokasi</th>
+                <th>Status</th>
+                <th>Status Approve</th>
+              </tr>
+            </thead>
+            <tbody id="folderApproveList">
+              <tr>
+                <td colspan="4" style="text-align: center">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <script>
+      const token = localStorage.getItem("token");
+      if (!token) window.location = "login_tif.html";
+
+      async function loadFoldersApprove() {
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/locations",
+            { headers: { Authorization: "Bearer " + token } }
+          );
+          if (!res.ok) {
+            document.getElementById(
+              "folderApproveList"
+            ).innerHTML = `<tr><td colspan="4" style="color:#d21a1a; text-align:center;">Gagal memuat data lokasi</td></tr>`;
+            return;
+          }
+          const data = await res.json();
+          // Hanya lokasi dengan status "completed" atau "lengkap"
+          const dataLengkap = (Array.isArray(data) ? data : []).filter(
+            (lokasi) => {
+              if (!lokasi.location_status || !lokasi.location_status.length)
+                return false;
+              const s = lokasi.location_status[0].status || "";
+              return (
+                s.toLowerCase() === "completed" || s.toLowerCase() === "lengkap"
+              );
+            }
+          );
+          if (dataLengkap.length === 0) {
+            document.getElementById(
+              "folderApproveList"
+            ).innerHTML = `<tr><td colspan="4" style="text-align:center;">Belum ada lokasi yang siap approve</td></tr>`;
+            return;
+          }
+          let html = "";
+          dataLengkap.forEach((f, idx) => {
+            // Cek status approve dari field 'approved_tif'
+            let approved = f.approved_tif === true;
+            html += `<tr>
+              <td>${idx + 1}</td>
+              <td>
+                <a class="lokasi-link" href="folder_approve_detail.html?id=${
+                  f.id
+                }">
+                  ${f.nama_lokasi}
+                </a>
+              </td>
+              <td>
+                <span class="status-badge">Lengkap</span>
+              </td>
+              <td>
+                ${
+                  approved
+                    ? `<span class="approve-badge approve-yes">Approved</span>`
+                    : `<span class="approve-badge approve-no">Belum Approve</span>`
+                }
+              </td>
+            </tr>`;
+          });
+          document.getElementById("folderApproveList").innerHTML = html;
+        } catch (e) {
+          document.getElementById(
+            "folderApproveList"
+          ).innerHTML = `<tr><td colspan="4" style="color:#d21a1a; text-align:center;">Terjadi error: ${e.message}</td></tr>`;
+        }
+      }
+      loadFoldersApprove();
+    </script>
+  </body>
+</html>

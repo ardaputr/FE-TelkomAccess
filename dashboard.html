@@ -5,6 +5,77 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="style/dashboard.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      .dashboard-tables-flex {
+        display: flex;
+        gap: 36px;
+        margin-bottom: 22px;
+      }
+      .data-table-section {
+        flex: 2;
+        min-width: 260px;
+      }
+      .side-approve-tables {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .approve-table-wrap {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 13px 12px 18px 12px;
+        box-shadow: 0 2px 12px rgba(86, 67, 255, 0.06);
+        margin-bottom: 14px;
+      }
+      .approve-title {
+        font-size: 1.07em;
+        font-weight: 600;
+        margin-bottom: 7px;
+        margin-left: 2px;
+      }
+      .approve-title.green {
+        color: #16c784;
+      }
+      .approve-title.red {
+        color: #ef4444;
+      }
+      .small-table {
+        width: 100%;
+        font-size: 0.99em;
+        border-collapse: collapse;
+        background: transparent;
+      }
+      .small-table th,
+      .small-table td {
+        border-bottom: 1px solid #e8e8e8;
+        padding: 5px 7px;
+        text-align: left;
+      }
+      .small-table th {
+        font-weight: 600;
+        color: #444;
+        background: transparent;
+      }
+      .small-table tr:last-child td {
+        border-bottom: none;
+      }
+      /* Responsive */
+      @media (max-width: 900px) {
+        .dashboard-tables-flex {
+          flex-direction: column;
+          gap: 18px;
+        }
+        .side-approve-tables {
+          flex-direction: row;
+          gap: 12px;
+        }
+        .approve-table-wrap {
+          flex: 1;
+          min-width: 110px;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard-container">
@@ -26,7 +97,8 @@
         </div>
         <nav>
           <a href="#" class="active">Dashboard</a>
-          <a href="folder.html">Kelola Folder</a>
+          <a href="folder.html">Folder Lokasi</a>
+          <a href="folder_approve.html">Folder Approve</a>
           <a href="#" onclick="logout()">Logout</a>
         </nav>
       </aside>
@@ -57,37 +129,77 @@
           </div>
         </section>
 
-        <!-- Data Table -->
-        <section class="data-table-section">
-          <h3>Daftar Lokasi</h3>
-          <div class="dashboard-searchbar">
-            <input
-              type="text"
-              id="searchLokasi"
-              placeholder="Cari Nama Lokasi..."
-              autocomplete="off"
-            />
-            <select id="filterStatus" class="dashboard-filter-status">
-              <option value="">Semua Status</option>
-              <option value="lengkap">Lengkap</option>
-              <option value="belum">Belum Lengkap</option>
-            </select>
+        <section class="overview-cards">
+          <div class="card blue">
+            <div class="card-title">Total Approve</div>
+            <div class="card-value" id="lokasi_approved">0</div>
+          </div>
+          <div class="card red">
+            <div class="card-title">Belum Approve</div>
+            <div class="card-value" id="lokasi_belum_approve">0</div>
+          </div>
+        </section>
+
+        <!-- Table & Approve Tables -->
+        <section class="dashboard-tables-flex">
+          <!-- KIRI: Tabel Daftar Lokasi -->
+          <div class="data-table-section" style="flex: 2">
+            <h3>Daftar Lokasi</h3>
+            <div class="dashboard-searchbar">
+              <input
+                type="text"
+                id="searchLokasi"
+                placeholder="Cari Nama Lokasi..."
+                autocomplete="off"
+              />
+              <select id="filterStatus" class="dashboard-filter-status">
+                <option value="">Semua Status</option>
+                <option value="lengkap">Lengkap</option>
+                <option value="belum">Belum Lengkap</option>
+              </select>
+            </div>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Lokasi</th>
+                  <th onclick="sortStatus()" style="cursor: pointer">
+                    Status &#x25B2;&#x25BC;
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="dataLokasi"></tbody>
+            </table>
           </div>
 
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Nama Lokasi</th>
-                <th onclick="sortStatus()" style="cursor: pointer">
-                  Status &#x25B2;&#x25BC;
-                </th>
-              </tr>
-            </thead>
-            <tbody id="dataLokasi">
-              <!-- Data akan diisi dari JS -->
-            </tbody>
-          </table>
+          <!-- KANAN: Sudah Approve & Belum Approve -->
+          <div class="side-approve-tables" style="flex: 1">
+            <div class="approve-table-wrap">
+              <h4 class="approve-title green">Sudah Approve</h4>
+              <table class="small-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Lokasi</th>
+                  </tr>
+                </thead>
+                <tbody id="approvedList"></tbody>
+              </table>
+            </div>
+            <div class="approve-table-wrap">
+              <h4 class="approve-title red">Belum Approve</h4>
+              <table class="small-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Lokasi</th>
+                  </tr>
+                </thead>
+                <tbody id="notApprovedList"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </main>
     </div>
@@ -136,25 +248,28 @@
     <script>
       function logout() {
         localStorage.removeItem("token");
+        localStorage.removeItem("role");
         window.location = "login.html";
       }
 
       const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("role") || "";
       if (!token) window.location = "login.html";
 
       // Nama user global
       let namaAkun = "Admin";
       let allLokasi = [];
 
-      // --- Nama Admin Dinamis di Header ---
+      // --- Nama User Dinamis di Header ---
       async function setUserNameOnHeader() {
         try {
-          const res = await fetch(
-            "https://be-telkom-access.vercel.app/account/me",
-            {
-              headers: { Authorization: "Bearer " + token },
-            }
-          );
+          let endpoint =
+            userRole === "tif"
+              ? "https://be-telkom-access.vercel.app/tif_accounts/me"
+              : "https://be-telkom-access.vercel.app/account/me";
+          const res = await fetch(endpoint, {
+            headers: { Authorization: "Bearer " + token },
+          });
           const data = await res.json();
           if (data.nama) {
             namaAkun = data.nama;
@@ -182,11 +297,14 @@
         renderLokasi();
       }
 
-      // Update stat cards (Total, Lengkap, Belum Lengkap)
+      // Update stat cards (Total, Lengkap, Belum Lengkap, Approve)
       function updateStatCards(lokasiList) {
         let total = lokasiList.length;
         let lengkap = 0;
         let belum = 0;
+        let approved = 0;
+        let belumApprove = 0;
+
         lokasiList.forEach((lokasi) => {
           let isCompleted =
             lokasi.location_status &&
@@ -195,10 +313,21 @@
               lokasi.location_status[0].status === "lengkap");
           if (isCompleted) lengkap++;
           else belum++;
+
+          // Cek status approve
+          if (lokasi.approved_tif === true) {
+            approved++;
+          } else {
+            belumApprove++;
+          }
         });
+
         document.getElementById("total_lokasi").innerText = total;
         document.getElementById("lokasi_completed").innerText = lengkap;
         document.getElementById("lokasi_belum").innerText = belum;
+        document.getElementById("lokasi_approved").innerText = approved;
+        document.getElementById("lokasi_belum_approve").innerText =
+          belumApprove;
       }
 
       // Sorting Status
@@ -244,6 +373,7 @@
         sortStatusAsc = !sortStatusAsc;
         renderLokasiTable(filtered);
         updateStatCards(filtered);
+        renderApproveTables(filtered);
       }
 
       // Fungsi render khusus hasil sorting dan filter
@@ -276,6 +406,35 @@
         tbody.innerHTML = html;
       }
 
+      // Tabel Approve & Belum Approve (kanan)
+      function renderApproveTables(lokasiList) {
+        // Sudah Approve
+        const approved = lokasiList.filter((l) => l.approved_tif === true);
+        // Belum Approve
+        const notApproved = lokasiList.filter((l) => l.approved_tif !== true);
+
+        let approvedHTML = "";
+        approved.forEach((l, i) => {
+          approvedHTML += `<tr>
+            <td>${i + 1}</td>
+            <td>${l.nama_lokasi}</td>
+          </tr>`;
+        });
+        document.getElementById("approvedList").innerHTML =
+          approvedHTML || `<tr><td colspan="2" style="color:#aaa">-</td></tr>`;
+
+        let notApprovedHTML = "";
+        notApproved.forEach((l, i) => {
+          notApprovedHTML += `<tr>
+            <td>${i + 1}</td>
+            <td>${l.nama_lokasi}</td>
+          </tr>`;
+        });
+        document.getElementById("notApprovedList").innerHTML =
+          notApprovedHTML ||
+          `<tr><td colspan="2" style="color:#aaa">-</td></tr>`;
+      }
+
       // Render lokasi (with filter)
       function renderLokasi(keyword = "") {
         const filter = (keyword || "").trim().toLowerCase();
@@ -298,6 +457,7 @@
         }
         renderLokasiTable(filtered);
         updateStatCards(filtered);
+        renderApproveTables(filtered);
       }
 
       // Event listener untuk filter status
@@ -329,14 +489,15 @@
       }
       document.getElementById("userProfileBtn").onclick = openProfileModal;
 
-      // Fetch data akun
+      // Fetch data akun (otomatis menyesuaikan role)
       async function fetchProfileData() {
-        const res = await fetch(
-          "https://be-telkom-access.vercel.app/account/me",
-          {
-            headers: { Authorization: "Bearer " + token },
-          }
-        );
+        let endpoint =
+          userRole === "tif"
+            ? "https://be-telkom-access.vercel.app/tif_accounts/me"
+            : "https://be-telkom-access.vercel.app/account/me";
+        const res = await fetch(endpoint, {
+          headers: { Authorization: "Bearer " + token },
+        });
         const data = await res.json();
         document.getElementById("profileNama").value = data.nama || "";
         document.getElementById("profileUsername").value = data.username || "";
@@ -350,17 +511,18 @@
         const nama = document.getElementById("profileNama").value;
         const jabatan = document.getElementById("profileJabatan").value;
         const email = document.getElementById("profileEmail").value;
-        const res = await fetch(
-          "https://be-telkom-access.vercel.app/account/me",
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-            body: JSON.stringify({ nama, jabatan, email }),
-          }
-        );
+        let endpoint =
+          userRole === "tif"
+            ? "https://be-telkom-access.vercel.app/tif_accounts/me"
+            : "https://be-telkom-access.vercel.app/account/me";
+        const res = await fetch(endpoint, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ nama, jabatan, email }),
+        });
         const data = await res.json();
         if (res.ok) {
           document.getElementById("profileMsg").style.color = "green";
@@ -383,17 +545,18 @@
         msgDiv.style.color = "#444";
         msgDiv.innerText = "Memproses...";
 
-        const res = await fetch(
-          "https://be-telkom-access.vercel.app/account/change-password",
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-            body: JSON.stringify({ old_password, new_password }),
-          }
-        );
+        let endpoint =
+          userRole === "tif"
+            ? "https://be-telkom-access.vercel.app/tif_accounts/change-password"
+            : "https://be-telkom-access.vercel.app/account/change-password";
+        const res = await fetch(endpoint, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ old_password, new_password }),
+        });
         const data = await res.json();
         if (res.ok) {
           msgDiv.style.color = "green";

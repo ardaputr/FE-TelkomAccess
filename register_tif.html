@@ -2,46 +2,12 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <title>Login</title>
-    <link rel="stylesheet" href="style/login.css" />
-    <style>
-      /* Tambahan agar link TIF ada di pojok kanan atas */
-      .tif-login-link {
-        position: fixed;
-        top: 14px;
-        right: 20px;
-        z-index: 100;
-        background: #fff;
-        color: #fc2525;
-        font-weight: 600;
-        padding: 8px 18px;
-        border-radius: 6px;
-        border: 1px solid #d8e2f1;
-        box-shadow: 0 2px 12px #0001;
-        text-decoration: none;
-        transition: background 0.2s, color 0.2s;
-      }
-      .tif-login-link:hover {
-        background: #fc2525; /* Latar belakang merah */
-        color: #fff; /* Teks jadi putih */
-        border-color: #fc2525;
-        text-decoration: none !important; /* Hilangkan underline pada hover */
-      }
-      @media (max-width: 500px) {
-        .tif-login-link {
-          right: 8px;
-          top: 8px;
-          padding: 6px 10px;
-          font-size: 0.95em;
-        }
-      }
-    </style>
+    <title>Register Akun TIF</title>
+    <link rel="stylesheet" href="style/register_tif.css" />
   </head>
   <body>
-    <!-- Link login TIF di pojok kanan atas -->
-    <a href="login_tif.html" class="tif-login-link">Login sebagai TIF</a>
     <div class="container">
-      <form id="loginForm" autocomplete="off">
+      <form id="registerTIFForm" autocomplete="off">
         <div class="logo" style="text-align: center; margin-bottom: 0.7rem">
           <img
             src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
@@ -56,8 +22,10 @@
             "
           />
         </div>
+        <input type="text" id="nama" placeholder="Nama Lengkap" required />
+        <input type="text" id="jabatan" placeholder="Jabatan" required />
+        <input type="email" id="email" placeholder="Email" required />
         <input type="text" id="username" placeholder="Username" required />
-        <!-- Wrapper untuk password + icon dalam 1 baris (flex) -->
         <div style="display: flex; align-items: center; position: relative">
           <input
             type="password"
@@ -66,7 +34,6 @@
             required
             style="flex: 1; padding-right: 40px"
           />
-          <!-- SVG Icon di dalam input (kanan) -->
           <span
             id="togglePwd"
             tabindex="0"
@@ -79,7 +46,6 @@
               height: 100%;
             "
           >
-            <!-- Mata Tertutup SVG -->
             <svg
               id="icon-hide"
               xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +62,6 @@
                 d="M17.94 17.94A10.05 10.05 0 0 1 12 19c-5 0-9.27-3.11-11-7.5A11.52 11.52 0 0 1 6.06 6.06M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-5.12M1 1l22 22"
               />
             </svg>
-            <!-- Mata Terbuka SVG -->
             <svg
               id="icon-show"
               xmlns="http://www.w3.org/2000/svg"
@@ -125,56 +90,65 @@
             </svg>
           </span>
         </div>
-        <button type="submit">Login</button>
+        <button type="submit">Register</button>
         <div id="msg"></div>
-        <center>
-          <div class="register-link">
-            Belum punya akun?
-            <a href="register.html">Register di sini</a>
-          </div>
-        </center>
+        <div style="text-align: center; margin-top: 1em">
+          Sudah punya akun?
+          <a href="login_tif.html">Login TIF di sini</a>
+        </div>
       </form>
     </div>
     <script>
       const msg = document.getElementById("msg");
-      document.getElementById("loginForm").onsubmit = async function (e) {
+      document.getElementById("registerTIFForm").onsubmit = async function (e) {
         e.preventDefault();
         msg.innerText = "Memproses...";
         msg.style.color = "#222";
         const res = await fetch(
-          "https://be-telkom-access.vercel.app/auth/login",
+          "https://be-telkom-access.vercel.app/tif/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              nama: document.getElementById("nama").value.trim(),
+              jabatan: document.getElementById("jabatan").value.trim(),
+              email: document.getElementById("email").value.trim(),
               username: document.getElementById("username").value.trim(),
               password: document.getElementById("password").value,
             }),
           }
         );
-        const data = await res.json();
-        if (res.ok && data.token) {
-          localStorage.setItem("token", data.token);
-          window.location = "dashboard.html";
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (err) {
+          msg.style.color = "red";
+          msg.innerText = "Server error, respons tidak valid.";
+          return;
+        }
+
+        if (res.ok) {
+          msg.style.color = "green";
+          msg.innerText = "Registrasi berhasil! Silakan login TIF.";
+          setTimeout(() => (window.location = "login_tif.html"), 1500);
         } else {
           msg.style.color = "red";
-          if (res.status === 404) {
-            msg.innerText = "Username tidak tersedia.";
-          } else if (
-            res.status === 400 &&
+          if (
             data.error &&
-            data.error.toLowerCase().includes("password")
+            (data.error.toLowerCase().includes("username") ||
+              data.error.toLowerCase().includes("email"))
           ) {
-            msg.innerText = "Password salah.";
+            msg.innerText = "Username/Email sudah terdaftar.";
           } else if (data.error) {
             msg.innerText = data.error;
           } else {
-            msg.innerText = "Login gagal. Silakan coba lagi.";
+            msg.innerText = "Registrasi gagal. Silakan coba lagi.";
           }
         }
       };
 
-      // Show/hide password logic dengan SVG
+      // Show/hide password logic
       const pwdInput = document.getElementById("password");
       const togglePwd = document.getElementById("togglePwd");
       const iconShow = document.getElementById("icon-show");
@@ -190,17 +164,16 @@
           iconHide.style.display = "";
         }
       };
-      // Keyboard accessible
       togglePwd.onkeydown = function (e) {
         if (e.key === " " || e.key === "Enter") togglePwd.click();
       };
 
-      // Clear pesan error jika user mengetik ulang username/password
-      document.getElementById("username").oninput = document.getElementById(
-        "password"
-      ).oninput = function () {
-        msg.innerText = "";
-      };
+      // Clear pesan error jika user mengetik ulang data
+      ["nama", "jabatan", "email", "username", "password"].forEach((id) => {
+        document.getElementById(id).oninput = function () {
+          msg.innerText = "";
+        };
+      });
     </script>
   </body>
 </html>

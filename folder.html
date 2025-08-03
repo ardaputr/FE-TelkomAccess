@@ -53,8 +53,8 @@
             alt="Logo"
             class="logo-icon"
             style="
-              height: 55px;
-              max-width: 220px;
+              height: 50px;
+              max-width: 250px;
               object-fit: contain;
               margin-right: 9px;
               vertical-align: middle;
@@ -63,8 +63,9 @@
         </div>
         <nav>
           <a href="dashboard.html">Dashboard</a>
-          <a href="folder.html" class="active">Kelola Folder</a>
-          <a href="#" onclick="logout()">Logout</a>
+          <a href="folder.html" class="active">Folder Lokasi</a>
+          <a href="folder_approve.html">Folder Approve</a>
+          <a href="login.html" onclick="logout()">Logout</a>
         </nav>
       </aside>
       <!-- Main Content -->
@@ -184,11 +185,16 @@
     <script>
       function logout() {
         localStorage.removeItem("token");
+        localStorage.removeItem("role");
         window.location = "login.html";
       }
 
       const token = localStorage.getItem("token");
+      const userRole = localStorage.getItem("role");
       if (!token) window.location = "login.html";
+      if (userRole === "tif") {
+        document.getElementById("buatFolder").style.display = "none";
+      }
 
       // Notif helper
       function showNotif(msg, type = "success") {
@@ -355,27 +361,32 @@
             f.location_status[0].status === "lengkap";
           let statusClass = isCompleted ? "badge-lengkap" : "badge-belum";
           html += `<tr>
-            <td>${idx + 1}</td>
-            <td>
-              <a class="lokasi-link" href="folder_detail.html?id=${f.id}">
-                <b>${f.nama_lokasi}</b>
-              </a>
-            </td>
-            <td>
-              <span class="badge status ${statusClass}">
-                ${isCompleted ? "LENGKAP" : "BELUM LENGKAP"}
-              </span>
-            </td>
-            <td>
-              <button class="aksi-btn" onclick="editFolder('${
-                f.id
-              }', '${f.nama_lokasi.replace(/'/g, "\\'")}')">Edit</button>
-              <button class="aksi-btn danger" onclick="deleteFolder('${
-                f.id
-              }')">Hapus</button>
-            </td>
-          </tr>`;
+    <td>${idx + 1}</td>
+    <td>
+      <a class="lokasi-link" href="folder_detail.html?id=${f.id}">
+        <b>${f.nama_lokasi}</b>
+      </a>
+    </td>
+    <td>
+      <span class="badge status ${statusClass}">
+        ${isCompleted ? "LENGKAP" : "BELUM LENGKAP"}
+      </span>
+    </td>
+    <td>
+      ${
+        userRole !== "tif"
+          ? `<button class="aksi-btn" onclick="editFolder('${
+              f.id
+            }', '${f.nama_lokasi.replace(/'/g, "\\'")}')">Edit</button>
+             <button class="aksi-btn danger" onclick="deleteFolder('${
+               f.id
+             }')">Hapus</button>`
+          : `<span style="color:#b0b0b0;font-size:0.95em;">-</span>`
+      }
+    </td>
+  </tr>`;
         });
+
         document.getElementById("listFolder").innerHTML = html;
       }
 
