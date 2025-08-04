@@ -294,22 +294,6 @@
     </div>
 
     <script>
-      // Variabel global untuk Supabase
-      let supabaseClient;
-
-      // Inisialisasi Supabase setelah script dimuat
-      document.addEventListener("DOMContentLoaded", function () {
-        const SUPABASE_URL = "https://yiqwtofmajuvjfqgfmms.supabase.co";
-        const SUPABASE_KEY =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcXd0b2ZtYWp1dmpmcWdmbW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNjAyOTIsImV4cCI6MjA2OTYzNjI5Mn0.wACQhz-FeGXHxMj1kjxw4GS94z9OEl5ZhVgEYaio9Ow";
-
-        // Membuat client Supabase
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // Inisialisasi halaman
-        initializePage();
-      });
-
       const token = localStorage.getItem("token");
       const userRole = localStorage.getItem("role");
       if (!token) window.location = "login.html";
@@ -321,8 +305,8 @@
       let sortAsc = true;
       let tipeFilter = "";
 
-      function initializePage() {
-        // HIDE FORM & TITLE UNTUK TIF
+      document.addEventListener("DOMContentLoaded", function () {
+        // Hide form khusus role tif
         if (userRole === "tif") {
           document.getElementById("uploadForm").style.display = "none";
           document.getElementById("uploadTitle").style.display = "none";
@@ -330,18 +314,16 @@
           document.getElementById("catatanTitle").style.display = "none";
         }
 
-        // Setup event listeners
         document.getElementById("filterTipeFile").onchange = function () {
           tipeFilter = this.value;
           renderFileTable();
         };
 
-        // Setup form submissions
-        setupFormSubmissions();
+        document.getElementById("uploadForm").onsubmit = uploadFileHandler;
+        document.getElementById("noteForm").onsubmit = noteFormHandler;
 
-        // Load data
         loadDetail();
-      }
+      });
 
       function niceKey(key) {
         switch (key) {
@@ -383,51 +365,47 @@
 
         if (userRole === "tif") {
           html += "<ul style='margin:0;padding:0 0 0 18px'>";
-          items.forEach((key, idx) => {
+          items.forEach((key) => {
             let checked = status[key];
             if (!checked) completed = false;
             html += `<li style="${
               key === "foto" ? "margin-bottom:18px;" : ""
             }"><b>${niceKey(key)}</b>: 
-        <span style="color:${
-          checked ? "#15803d" : "#e11d48"
-        }; font-weight:600;">
-          ${checked ? "✅" : "❌"}
-        </span>
-      </li>`;
+              <span style="color:${
+                checked ? "#15803d" : "#e11d48"
+              }; font-weight:600;">${checked ? "✅" : "❌"}</span>
+            </li>`;
           });
           html += "</ul>";
         } else {
           html += "<form id='formChecklistStatus'>";
-          items.forEach((key, idx) => {
+          items.forEach((key) => {
             let checked = status[key] ? "checked" : "";
             if (!status[key]) completed = false;
             html += `
-        <label style="display:block; margin-bottom:7px;${
-          key === "foto" ? "margin-bottom:18px;" : ""
-        }">
-          <input type="checkbox" name="${key}" ${checked}
-            onchange="window.updateChecklistStatus('${key}', this.checked)" 
-            style="transform:scale(1.3); margin-right:10px;">
-          <b>${niceKey(key)}</b>
-        </label>`;
+              <label style="display:block; margin-bottom:7px;${
+                key === "foto" ? "margin-bottom:18px;" : ""
+              }">
+                <input type="checkbox" name="${key}" ${checked}
+                  onchange="window.updateChecklistStatus('${key}', this.checked)" 
+                  style="transform:scale(1.3); margin-right:10px;">
+                <b>${niceKey(key)}</b>
+              </label>`;
           });
           html += "</form>";
         }
-        html += `
-    <div style="margin-top:12px;">
-      <span style="background:${
-        completed ? "#27ae60" : "#e74c3c"
-      };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
-        ${completed ? "LENGKAP" : "BELUM LENGKAP"}
-      </span>
-    </div>
-  `;
+        html += `<div style="margin-top:12px;">
+          <span style="background:${
+            completed ? "#27ae60" : "#e74c3c"
+          };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
+            ${completed ? "LENGKAP" : "BELUM LENGKAP"}
+          </span>
+        </div>`;
         return html;
       }
 
       window.updateChecklistStatus = async function (key, checked) {
-        if (userRole === "tif") return; // Prevent tif from updating
+        if (userRole === "tif") return;
         const patch = {};
         patch[key] = checked;
         const allKeys = [
@@ -467,31 +445,25 @@
             )
           : fileData;
         if (filtered.length === 0) {
-          html = `<tr>
-      <td colspan="5" style="text-align:center; color:#888888;">
-        Tidak ada file ditemukan
-      </td>
-    </tr>`;
+          html = `<tr><td colspan="5" style="text-align:center; color:#888888;">Tidak ada file ditemukan</td></tr>`;
         } else {
           filtered.forEach((f, idx) => {
             html += `<tr>
-        <td>${idx + 1}</td>
-        <td>${f.tipe_file}</td>
-        <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
-        <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
-        <td>
-          ${
-            userRole === "tif"
-              ? ""
-              : `<button onclick="editFile('${f.id}', \`${(
-                  f.keterangan || ""
-                ).replace(/`/g, "\\`")}\`)">Edit</button>
-                <button class="danger" onclick="deleteFile('${
-                  f.id
-                }')">Hapus</button>`
-          }
-        </td>
-      </tr>`;
+              <td>${idx + 1}</td>
+              <td>${f.tipe_file}</td>
+              <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
+              <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
+              <td>${
+                userRole === "tif"
+                  ? ""
+                  : `<button onclick="editFile('${f.id}', \`${(
+                      f.keterangan || ""
+                    ).replace(/`/g, "\\`")}\`)">Edit</button>
+                    <button class="danger" onclick="deleteFile('${
+                      f.id
+                    }')">Hapus</button>`
+              }</td>
+            </tr>`;
           });
         }
         document.getElementById("listFile").innerHTML = html;
@@ -512,177 +484,133 @@
       async function loadDetail() {
         const res = await fetch(
           `https://be-telkom-access.vercel.app/locations/${id}`,
-          {
-            headers: { Authorization: "Bearer " + token },
-          }
+          { headers: { Authorization: "Bearer " + token } }
         );
         const { lokasi, files, notes, status } = await res.json();
         document.getElementById("namalokasi").innerText = lokasi.nama_lokasi;
         statusData = status;
         document.getElementById("statusChecklist").innerHTML =
           renderChecklistStatus(status);
-
         fileData = files || [];
         renderFileTable();
 
         let nhtml = "";
         if (!notes || notes.length === 0) {
-          nhtml = `<tr>
-    <td colspan="4" style="text-align:center; color:#888888;">
-      Tidak ada catatan ditemukan
-    </td>
-  </tr>`;
+          nhtml = `<tr><td colspan="4" style="text-align:center; color:#888888;">Tidak ada catatan ditemukan</td></tr>`;
         } else {
           notes.forEach((n, idx) => {
             nhtml += `<tr>
-      <td>${idx + 1}</td>
-      <td>${n.tipe}</td>
-      <td>${n.isi}</td>
-      <td>
-        ${
-          userRole === "tif"
-            ? ""
-            : `<button class="edit-note-btn" data-id="${
-                n.id
-              }" data-isi="${encodeURIComponent(
-                n.isi
-              )}" onclick="showEditNoteModal(this)">Edit</button>
-              <button class="danger" onclick="deleteNote('${
-                n.id
-              }')">Hapus</button>`
-        }
-      </td>
-    </tr>`;
+              <td>${idx + 1}</td>
+              <td>${n.tipe}</td>
+              <td>${n.isi}</td>
+              <td>${
+                userRole === "tif"
+                  ? ""
+                  : `<button class="edit-note-btn" data-id="${
+                      n.id
+                    }" data-isi="${encodeURIComponent(
+                      n.isi
+                    )}" onclick="showEditNoteModal(this)">Edit</button>
+                    <button class="danger" onclick="deleteNote('${
+                      n.id
+                    }')">Hapus</button>`
+              }</td>
+            </tr>`;
           });
         }
         document.getElementById("listNote").innerHTML = nhtml;
       }
 
-      function setupFormSubmissions() {
-        document.getElementById("uploadForm").onsubmit = async function (e) {
-          e.preventDefault();
-          if (userRole === "tif") {
-            alert("Akun TIF tidak diizinkan upload file.");
-            return false;
-          }
-          const fileInput = document.getElementById("file");
-          const file = fileInput.files[0];
-          if (!file) return alert("Pilih file terlebih dahulu!");
+      // ==== HANDLER FILE UPLOAD ====
+      async function uploadFileHandler(e) {
+        e.preventDefault();
+        if (userRole === "tif") {
+          alert("Akun TIF tidak diizinkan upload file.");
+          return false;
+        }
+        const fileInput = document.getElementById("file");
+        const file = fileInput.files[0];
+        if (!file) return alert("Pilih file terlebih dahulu!");
 
-          const tipe_file = document.getElementById("tipe_file").value;
-          const keterangan = document.getElementById("keterangan").value;
+        const tipe_file = document.getElementById("tipe_file").value;
+        const keterangan = document.getElementById("keterangan").value;
+        const msgDiv = document.getElementById("msg-upload");
+        msgDiv.innerText = "Mengunggah file...";
+        msgDiv.style.color = "#666";
 
-          const msgDiv = document.getElementById("msg-upload");
-          msgDiv.innerText = "Mengunggah file ke storage...";
-          msgDiv.style.color = "#666";
+        // Upload ke backend pakai FormData
+        const form = new FormData();
+        form.append("file", file);
+        form.append("location_id", id);
+        form.append("tipe_file", tipe_file);
+        form.append("keterangan", keterangan);
 
-          // 1. Upload ke Supabase Storage
-          const fileName = `${id}-${Date.now()}-${file.name}`.replace(
-            /\s+/g,
-            "_"
+        try {
+          const res = await fetch(
+            "https://be-telkom-access.vercel.app/files/upload",
+            {
+              method: "POST",
+              headers: { Authorization: "Bearer " + token },
+              body: form,
+            }
           );
-          const { data, error } = await supabaseClient.storage
-            .from("uploads")
-            .upload(fileName, file, { upsert: true });
-
-          if (error) {
-            msgDiv.style.color = "red";
-            msgDiv.innerText = "Gagal upload ke storage: " + error.message;
-            return;
-          }
-
-          // 2. Ambil Public URL file
-          const { data: publicUrlData } = supabaseClient.storage
-            .from("uploads")
-            .getPublicUrl(fileName);
-
-          // 3. Kirim metadata ke backend
-          try {
-            const response = await fetch(
-              "https://be-telkom-access.vercel.app/files",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + token,
-                },
-                body: JSON.stringify({
-                  location_id: id,
-                  tipe_file,
-                  nama_file: file.name,
-                  url: publicUrlData.publicUrl,
-                  keterangan,
-                }),
-              }
-            );
-            const res = await response.json();
-
-            if (response.ok && !res.error) {
-              msgDiv.style.color = "#22c55e";
-              msgDiv.innerText = "Upload file berhasil!";
-              fileInput.value = "";
-              document.getElementById("keterangan").value = "";
-              document.getElementById("tipe_file").selectedIndex = 0;
-            } else {
-              msgDiv.style.color = "red";
-              msgDiv.innerText = res.error || "Gagal simpan metadata file.";
-            }
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Upload file berhasil!";
+            fileInput.value = "";
+            document.getElementById("keterangan").value = "";
+            document.getElementById("tipe_file").selectedIndex = 0;
             loadDetail();
-          } catch (err) {
+          } else {
             msgDiv.style.color = "red";
-            msgDiv.innerText = "Gagal terhubung ke server backend.";
+            msgDiv.innerText = data.error || "Upload file gagal.";
           }
-        };
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal upload. Cek koneksi/server.";
+        }
+      }
 
-        document.getElementById("noteForm").onsubmit = async function (e) {
-          if (userRole === "tif") {
-            alert("Akun TIF tidak diizinkan menambah catatan.");
-            return false;
-          }
-          e.preventDefault();
-          const msgDiv = document.getElementById("msg-note");
-          msgDiv.innerText = "";
-          try {
-            const res = await fetch(
-              "https://be-telkom-access.vercel.app/notes",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + token,
-                },
-                body: JSON.stringify({
-                  location_id: id,
-                  tipe: document.getElementById("tipe_note").value,
-                  isi: document.getElementById("isi_note").value,
-                }),
-              }
-            );
-            const data = await res.json();
-            if (res.ok && !data.error) {
-              msgDiv.style.color = "#22c55e";
-              msgDiv.innerText = "Catatan berhasil ditambahkan.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-              }, 2000);
-
-              document.getElementById("isi_note").value = "";
-            } else {
-              msgDiv.style.color = "red";
-              msgDiv.innerText = data.error || "Gagal menambah catatan.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-              }, 2000);
-            }
-            loadDetail();
-          } catch (err) {
-            msgDiv.style.color = "red";
-            msgDiv.innerText = "Gagal terhubung ke server.";
+      // ==== HANDLER CATATAN ====
+      async function noteFormHandler(e) {
+        if (userRole === "tif") {
+          alert("Akun TIF tidak diizinkan menambah catatan.");
+          return false;
+        }
+        e.preventDefault();
+        const msgDiv = document.getElementById("msg-note");
+        msgDiv.innerText = "";
+        try {
+          const res = await fetch("https://be-telkom-access.vercel.app/notes", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({
+              location_id: id,
+              tipe: document.getElementById("tipe_note").value,
+              isi: document.getElementById("isi_note").value,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && !data.error) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Catatan berhasil ditambahkan.";
             setTimeout(() => {
               msgDiv.innerText = "";
             }, 2000);
+            document.getElementById("isi_note").value = "";
+            loadDetail();
+          } else {
+            msgDiv.style.color = "red";
+            msgDiv.innerText = data.error || "Gagal menambah catatan.";
           }
-        };
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal terhubung ke server.";
+        }
       }
 
       // Modal Edit Note
