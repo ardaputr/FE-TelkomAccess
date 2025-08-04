@@ -1,146 +1,124 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Detail Folder</title>
-    <link rel="stylesheet" href="style/detail.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  </head>
-  <body>
-    <div class="detail-container">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <div class="logo">
-          <img
-            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
-            alt="Logo"
-            class="logo-icon"
-            style="
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Detail Folder</title>
+  <link rel="stylesheet" href="style/detail.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <div class="detail-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img
+          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgRf2hY0A5B5EzP-Exi-cp002izlyCCtWYX9R8PTBmtDkm_0UGnCCMCRgicd6voh2p7aQ0NNiRAX2M4YvUxTcT-CVTENoU8xp39x1mcDCoc1YbuI9xY6iZEMoIQlvS2gPWE7CJCvwxQKR8/s320/telkom-akses.png"
+          alt="Logo" class="logo-icon" style="
               height: 50px;
               max-width: 250px;
               object-fit: contain;
               margin-right: 9px;
               vertical-align: middle;
-            "
-          />
-        </div>
-        <nav>
-          <a href="dashboard.html">Dashboard</a>
-          <a href="folder.html" class="active">Folder Lokasi</a>
-          <a href="folder_approve.html">Folder Approve</a>
-          <a href="login.html" onclick="logout()">Logout</a>
-        </nav>
-      </aside>
-      <!-- Main Content -->
-      <main>
-        <a href="folder.html">← Kembali</a>
-        <h2 id="namalokasi">...</h2>
-        <h3>Status Kelengkapan</h3>
-        <div id="statusChecklist"></div>
-        <h3 id="uploadTitle">Upload File ke Folder</h3>
-        <form id="uploadForm" enctype="multipart/form-data">
-          <input type="file" id="file" name="file" required />
-          <select id="tipe_file" name="tipe_file" required>
-            <option value="word">Word (BACT/BAUT)</option>
-            <option value="pdf">PDF</option>
-            <option value="excel">Excel (BOQ/MainCore/OPM)</option>
-            <option value="kml">KML</option>
-            <option value="dwg">DWG</option>
-            <option value="foto">Foto</option>
+            " />
+      </div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="folder.html" class="active">Folder Lokasi</a>
+        <a href="folder_approve.html">Folder Approve</a>
+        <a href="login.html" onclick="logout()">Logout</a>
+      </nav>
+    </aside>
+    <!-- Main Content -->
+    <main>
+      <a href="folder.html">← Kembali</a>
+      <h2 id="namalokasi">...</h2>
+      <h3>Status Kelengkapan</h3>
+      <div id="statusChecklist"></div>
+      <h3 id="uploadTitle">Upload File ke Folder</h3>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="file" name="file" required />
+        <select id="tipe_file" name="tipe_file" required>
+          <option value="word">Word (BACT/BAUT)</option>
+          <option value="pdf">PDF</option>
+          <option value="excel">Excel (BOQ/MainCore/OPM)</option>
+          <option value="kml">KML</option>
+          <option value="dwg">DWG</option>
+          <option value="foto">Foto</option>
+        </select>
+        <button type="submit">Upload</button>
+        <textarea id="keterangan" name="keterangan" placeholder="Keterangan" rows="2"
+          style="resize: vertical; min-width: 220px"></textarea>
+      </form>
+      <p id="msg-upload" style="margin-bottom: 2px; text-align: center; min-height: 1.4em"></p>
+
+      <!-- FILTER FILE -->
+      <div style="margin-bottom: 18px">
+        <label for="filterTipeFile" style="margin: 0 0 8px 0; display: block; font-weight: 500">Filter Tipe
+          File:</label>
+        <select id="filterTipeFile" style="max-width: 200px">
+          <option value="">Semua Tipe</option>
+          <option value="word">Word</option>
+          <option value="pdf">PDF</option>
+          <option value="excel">Excel</option>
+          <option value="kml">KML</option>
+          <option value="dwg">DWG</option>
+          <option value="foto">Foto</option>
+        </select>
+      </div>
+
+      <h3>Daftar File</h3>
+      <div class="table-responsive">
+        <table class="data-table" id="tableFile">
+          <thead>
+            <tr>
+              <th class="noclick">No</th>
+              <th onclick="sortTable('tipe_file')">
+                Tipe File &#x25B2;&#x25BC;
+              </th>
+              <th class="noclick">Nama File</th>
+              <th class="noclick">Keterangan</th>
+              <th class="noclick">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="listFile"></tbody>
+        </table>
+      </div>
+      <h3 id="catatanTitle">Catatan</h3>
+      <form id="noteForm" class="note-form-modern">
+        <div class="note-form-top">
+          <select id="tipe_note">
+            <option value="laporan_harian">Laporan Harian</option>
+            <option value="Revisi">Revisi</option>
+            <option value="Catatan">Catatan</option>
           </select>
-          <button type="submit">Upload</button>
-          <textarea
-            id="keterangan"
-            name="keterangan"
-            placeholder="Keterangan"
-            rows="2"
-            style="resize: vertical; min-width: 220px"
-          ></textarea>
-        </form>
-        <p
-          id="msg-upload"
-          style="margin-bottom: 2px; text-align: center; min-height: 1.4em"
-        ></p>
-
-        <!-- FILTER FILE -->
-        <div style="margin-bottom: 18px">
-          <label
-            for="filterTipeFile"
-            style="margin: 0 0 8px 0; display: block; font-weight: 500"
-            >Filter Tipe File:</label
-          >
-          <select id="filterTipeFile" style="max-width: 200px">
-            <option value="">Semua Tipe</option>
-            <option value="word">Word</option>
-            <option value="pdf">PDF</option>
-            <option value="excel">Excel</option>
-            <option value="kml">KML</option>
-            <option value="dwg">DWG</option>
-            <option value="foto">Foto</option>
-          </select>
+          <button type="submit" id="btnTambahCatatan">Tambah Catatan</button>
         </div>
+        <textarea id="isi_note" required rows="3" placeholder="Tulis catatan di sini..."></textarea>
+      </form>
+      <p id="msg-note" style="margin-bottom: 2px; text-align: center; min-height: 1.4em"></p>
 
-        <h3>Daftar File</h3>
-        <div class="table-responsive">
-          <table class="data-table" id="tableFile">
-            <thead>
-              <tr>
-                <th class="noclick">No</th>
-                <th onclick="sortTable('tipe_file')">
-                  Tipe File &#x25B2;&#x25BC;
-                </th>
-                <th class="noclick">Nama File</th>
-                <th class="noclick">Keterangan</th>
-                <th class="noclick">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="listFile"></tbody>
-          </table>
-        </div>
-        <h3 id="catatanTitle">Catatan</h3>
-        <form id="noteForm" class="note-form-modern">
-          <div class="note-form-top">
-            <select id="tipe_note">
-              <option value="laporan_harian">Laporan Harian</option>
-              <option value="Revisi">Revisi</option>
-              <option value="Catatan">Catatan</option>
-            </select>
-            <button type="submit" id="btnTambahCatatan">Tambah Catatan</button>
-          </div>
-          <textarea
-            id="isi_note"
-            required
-            rows="3"
-            placeholder="Tulis catatan di sini..."
-          ></textarea>
-        </form>
-        <p
-          id="msg-note"
-          style="margin-bottom: 2px; text-align: center; min-height: 1.4em"
-        ></p>
+      <h3>Daftar Catatan</h3>
+      <div class="table-responsive">
+        <table class="data-table" id="tableNote">
+          <thead>
+            <tr>
+              <th class="noclick">No</th>
+              <th class="noclick">Tipe</th>
+              <th class="noclick">Isi</th>
+              <th class="noclick">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="listNote"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
 
-        <h3>Daftar Catatan</h3>
-        <div class="table-responsive">
-          <table class="data-table" id="tableNote">
-            <thead>
-              <tr>
-                <th class="noclick">No</th>
-                <th class="noclick">Tipe</th>
-                <th class="noclick">Isi</th>
-                <th class="noclick">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="listNote"></tbody>
-          </table>
-        </div>
-      </main>
-    </div>
-
-    <!-- MODAL EDIT NOTE -->
-    <div
-      id="modalEditNote"
-      style="
+  <!-- MODAL EDIT NOTE -->
+  <div id="modalEditNote" style="
         display: none;
         position: fixed;
         left: 0;
@@ -151,10 +129,8 @@
         z-index: 9999;
         justify-content: center;
         align-items: center;
-      "
-    >
-      <div
-        style="
+      ">
+    <div style="
           background: #fff;
           max-width: 440px;
           width: 98vw;
@@ -164,15 +140,11 @@
           display: flex;
           flex-direction: column;
           gap: 14px;
-        "
-      >
-        <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
-          Edit Catatan
-        </div>
-        <textarea
-          id="modalEditIsi"
-          rows="6"
-          style="
+        ">
+      <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
+        Edit Catatan
+      </div>
+      <textarea id="modalEditIsi" rows="6" style="
             width: 100%;
             resize: vertical;
             padding: 11px;
@@ -180,47 +152,35 @@
             border-radius: 7px;
             border: 1.2px solid #d3dcff;
             background: #f8fafd;
-          "
-        ></textarea>
-        <p
-          id="msg-edit-note"
-          style="min-height: 1.3em; text-align: center; margin: 2px 0 4px 0"
-        ></p>
-        <div style="display: flex; justify-content: flex-end; gap: 12px">
-          <button
-            onclick="closeEditNoteModal()"
-            style="
+          "></textarea>
+      <p id="msg-edit-note" style="min-height: 1.3em; text-align: center; margin: 2px 0 4px 0"></p>
+      <div style="display: flex; justify-content: flex-end; gap: 12px">
+        <button onclick="closeEditNoteModal()" style="
               padding: 7px 18px;
               border-radius: 6px;
               background: #e5e7eb;
               color: #333;
               border: none;
               font-weight: 500;
-            "
-          >
-            Batal
-          </button>
-          <button
-            id="modalEditSimpanBtn"
-            style="
+            ">
+          Batal
+        </button>
+        <button id="modalEditSimpanBtn" style="
               padding: 7px 18px;
               border-radius: 6px;
               background: #fc2525;
               color: #fff;
               border: none;
               font-weight: 600;
-            "
-          >
-            Simpan
-          </button>
-        </div>
+            ">
+          Simpan
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- MODAL EDIT KETERANGAN FILE -->
-    <div
-      id="modalEditFile"
-      style="
+  <!-- MODAL EDIT KETERANGAN FILE -->
+  <div id="modalEditFile" style="
         display: none;
         position: fixed;
         left: 0;
@@ -231,10 +191,8 @@
         z-index: 9999;
         justify-content: center;
         align-items: center;
-      "
-    >
-      <div
-        style="
+      ">
+    <div style="
           background: #fff;
           max-width: 440px;
           width: 98vw;
@@ -244,15 +202,11 @@
           display: flex;
           flex-direction: column;
           gap: 14px;
-        "
-      >
-        <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
-          Edit Keterangan File
-        </div>
-        <textarea
-          id="modalEditKetFile"
-          rows="5"
-          style="
+        ">
+      <div style="font-weight: 600; font-size: 1.07em; margin-bottom: 3px">
+        Edit Keterangan File
+      </div>
+      <textarea id="modalEditKetFile" rows="5" style="
             width: 100%;
             resize: vertical;
             padding: 11px;
@@ -260,500 +214,488 @@
             border-radius: 7px;
             border: 1.2px solid #d3dcff;
             background: #f8fafd;
-          "
-        ></textarea>
-        <div style="display: flex; justify-content: flex-end; gap: 12px">
-          <button
-            onclick="closeEditFileModal()"
-            style="
+          "></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 12px">
+        <button onclick="closeEditFileModal()" style="
               padding: 7px 18px;
               border-radius: 6px;
               background: #e5e7eb;
               color: #333;
               border: none;
               font-weight: 500;
-            "
-          >
-            Batal
-          </button>
-          <button
-            id="modalEditFileSimpanBtn"
-            style="
+            ">
+          Batal
+        </button>
+        <button id="modalEditFileSimpanBtn" style="
               padding: 7px 18px;
               border-radius: 6px;
               background: #fc2525;
               color: #fff;
               border: none;
               font-weight: 600;
-            "
-          >
-            Simpan
-          </button>
-        </div>
+            ">
+          Simpan
+        </button>
       </div>
     </div>
+  </div>
 
-    <script>
-      const token = localStorage.getItem("token");
-      const userRole = localStorage.getItem("role");
-      if (!token) window.location = "login.html";
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get("id");
+  <script>
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("role");
+    if (!token) window.location = "login.html";
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get("id");
 
-      let statusData = null;
-      let fileData = [];
-      let sortAsc = true;
-      let tipeFilter = "";
+    let statusData = null;
+    let fileData = [];
+    let sortAsc = true;
+    let tipeFilter = "";
 
-      document.addEventListener("DOMContentLoaded", function () {
-        // Hide form khusus role tif
-        if (userRole === "tif") {
-          document.getElementById("uploadForm").style.display = "none";
-          document.getElementById("uploadTitle").style.display = "none";
-          document.getElementById("noteForm").style.display = "none";
-          document.getElementById("catatanTitle").style.display = "none";
-        }
-
-        document.getElementById("filterTipeFile").onchange = function () {
-          tipeFilter = this.value;
-          renderFileTable();
-        };
-
-        document.getElementById("uploadForm").onsubmit = uploadFileHandler;
-        document.getElementById("noteForm").onsubmit = noteFormHandler;
-
-        loadDetail();
-      });
-
-      function niceKey(key) {
-        switch (key) {
-          case "bact":
-            return "BACT";
-          case "baut":
-            return "BAUT";
-          case "boq":
-            return "BOQ";
-          case "maincore":
-            return "Maincore";
-          case "hasil_ukur":
-            return "OPM/Hasil Ukur";
-          case "file_kml":
-            return "KML";
-          case "file_dwg":
-            return "DWG";
-          case "foto":
-            return "Foto";
-          default:
-            return key.toUpperCase();
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+      // Hide form khusus role tif
+      if (userRole === "tif") {
+        document.getElementById("uploadForm").style.display = "none";
+        document.getElementById("uploadTitle").style.display = "none";
+        document.getElementById("noteForm").style.display = "none";
+        document.getElementById("catatanTitle").style.display = "none";
       }
 
-      function renderChecklistStatus(status) {
-        if (!status) return "<i>Belum ada status</i>";
-        let items = [
-          "bact",
-          "baut",
-          "boq",
-          "maincore",
-          "hasil_ukur",
-          "file_kml",
-          "file_dwg",
-          "foto",
-        ];
-        let completed = true;
-        let html = "";
+      document.getElementById("filterTipeFile").onchange = function () {
+        tipeFilter = this.value;
+        renderFileTable();
+      };
 
-        if (userRole === "tif") {
-          html += "<ul style='margin:0;padding:0 0 0 18px'>";
-          items.forEach((key) => {
-            let checked = status[key];
-            if (!checked) completed = false;
-            html += `<li style="${
-              key === "foto" ? "margin-bottom:18px;" : ""
+      document.getElementById("uploadForm").onsubmit = uploadFileHandler;
+      document.getElementById("noteForm").onsubmit = noteFormHandler;
+
+      loadDetail();
+    });
+
+    function niceKey(key) {
+      switch (key) {
+        case "bact":
+          return "BACT";
+        case "baut":
+          return "BAUT";
+        case "boq":
+          return "BOQ";
+        case "maincore":
+          return "Maincore";
+        case "hasil_ukur":
+          return "OPM/Hasil Ukur";
+        case "file_kml":
+          return "KML";
+        case "file_dwg":
+          return "DWG";
+        case "foto":
+          return "Foto";
+        default:
+          return key.toUpperCase();
+      }
+    }
+
+    function renderChecklistStatus(status) {
+      if (!status) return "<i>Belum ada status</i>";
+      let items = [
+        "bact",
+        "baut",
+        "boq",
+        "maincore",
+        "hasil_ukur",
+        "file_kml",
+        "file_dwg",
+        "foto",
+      ];
+      let completed = true;
+      let html = "";
+
+      if (userRole === "tif") {
+        html += "<ul style='margin:0;padding:0 0 0 18px'>";
+        items.forEach((key) => {
+          let checked = status[key];
+          if (!checked) completed = false;
+          html += `<li style="${key === "foto" ? "margin-bottom:18px;" : ""
             }"><b>${niceKey(key)}</b>: 
-              <span style="color:${
-                checked ? "#15803d" : "#e11d48"
-              }; font-weight:600;">${checked ? "✅" : "❌"}</span>
+              <span style="color:${checked ? "#15803d" : "#e11d48"
+            }; font-weight:600;">${checked ? "✅" : "❌"}</span>
             </li>`;
-          });
-          html += "</ul>";
-        } else {
-          html += "<form id='formChecklistStatus'>";
-          items.forEach((key) => {
-            let checked = status[key] ? "checked" : "";
-            if (!status[key]) completed = false;
-            html += `
-              <label style="display:block; margin-bottom:7px;${
-                key === "foto" ? "margin-bottom:18px;" : ""
-              }">
+        });
+        html += "</ul>";
+      } else {
+        html += "<form id='formChecklistStatus'>";
+        items.forEach((key) => {
+          let checked = status[key] ? "checked" : "";
+          if (!status[key]) completed = false;
+          html += `
+              <label style="display:block; margin-bottom:7px;${key === "foto" ? "margin-bottom:18px;" : ""
+            }">
                 <input type="checkbox" name="${key}" ${checked}
                   onchange="window.updateChecklistStatus('${key}', this.checked)" 
                   style="transform:scale(1.3); margin-right:10px;">
                 <b>${niceKey(key)}</b>
               </label>`;
-          });
-          html += "</form>";
-        }
-        html += `<div style="margin-top:12px;">
-          <span style="background:${
-            completed ? "#27ae60" : "#e74c3c"
-          };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
+        });
+        html += "</form>";
+      }
+      html += `<div style="margin-top:12px;">
+          <span style="background:${completed ? "#27ae60" : "#e74c3c"
+        };color:#fff;font-weight:bold;border-radius:7px;padding:3px 14px;font-size:1.09em;letter-spacing:1px;">
             ${completed ? "LENGKAP" : "BELUM LENGKAP"}
           </span>
         </div>`;
-        return html;
-      }
+      return html;
+    }
 
-      window.updateChecklistStatus = async function (key, checked) {
-        if (userRole === "tif") return;
-        const patch = {};
-        patch[key] = checked;
-        const allKeys = [
-          "bact",
-          "baut",
-          "boq",
-          "maincore",
-          "hasil_ukur",
-          "file_kml",
-          "file_dwg",
-          "foto",
-        ];
-        const updatedStatus = { ...statusData, ...patch };
-        const allCompleted = allKeys.every((k) =>
-          k === key ? checked : statusData[k]
-        );
-        patch.status = allCompleted ? "lengkap" : "belum lengkap";
-        await fetch(
-          `https://be-telkom-access.vercel.app/locations/${id}/status`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-            body: JSON.stringify(patch),
-          }
-        );
-        loadDetail();
-      };
+    window.updateChecklistStatus = async function (key, checked) {
+      if (userRole === "tif") return;
+      const patch = {};
+      patch[key] = checked;
+      const allKeys = [
+        "bact",
+        "baut",
+        "boq",
+        "maincore",
+        "hasil_ukur",
+        "file_kml",
+        "file_dwg",
+        "foto",
+      ];
+      const updatedStatus = { ...statusData, ...patch };
+      const allCompleted = allKeys.every((k) =>
+        k === key ? checked : statusData[k]
+      );
+      patch.status = allCompleted ? "lengkap" : "belum lengkap";
+      await fetch(
+        `https://be-telkom-access.vercel.app/locations/${id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify(patch),
+        }
+      );
+      loadDetail();
+    };
 
-      function renderFileTable() {
-        let html = "";
-        const filtered = tipeFilter
-          ? fileData.filter(
-              (f) => (f.tipe_file || "").toLowerCase() === tipeFilter
-            )
-          : fileData;
-        if (filtered.length === 0) {
-          html = `<tr><td colspan="5" style="text-align:center; color:#888888;">Tidak ada file ditemukan</td></tr>`;
-        } else {
-          filtered.forEach((f, idx) => {
-            html += `<tr>
+    function renderFileTable() {
+      let html = "";
+      const filtered = tipeFilter
+        ? fileData.filter(
+          (f) => (f.tipe_file || "").toLowerCase() === tipeFilter
+        )
+        : fileData;
+      if (filtered.length === 0) {
+        html = `<tr><td colspan="5" style="text-align:center; color:#888888;">Tidak ada file ditemukan</td></tr>`;
+      } else {
+        filtered.forEach((f, idx) => {
+          html += `<tr>
               <td>${idx + 1}</td>
               <td>${f.tipe_file}</td>
               <td><a href="${f.url}" target="_blank">${f.nama_file}</a></td>
               <td>${(f.keterangan || "").replace(/\n/g, "<br>")}</td>
-              <td>${
-                userRole === "tif"
-                  ? ""
-                  : `<button onclick="editFile('${f.id}', \`${(
-                      f.keterangan || ""
-                    ).replace(/`/g, "\\`")}\`)">Edit</button>
-                    <button class="danger" onclick="deleteFile('${
-                      f.id
-                    }')">Hapus</button>`
-              }</td>
+              <td>${userRole === "tif"
+              ? ""
+              : `<button onclick="editFile('${f.id}', \`${(
+                f.keterangan || ""
+              ).replace(/`/g, "\\`")}\`)">Edit</button>
+                    <button class="danger" onclick="deleteFile('${f.id
+              }')">Hapus</button>`
+            }</td>
             </tr>`;
-          });
-        }
-        document.getElementById("listFile").innerHTML = html;
-      }
-
-      window.sortTable = function (col) {
-        fileData.sort((a, b) => {
-          let v1 = (a[col] || "").toLowerCase();
-          let v2 = (b[col] || "").toLowerCase();
-          if (v1 < v2) return sortAsc ? -1 : 1;
-          if (v1 > v2) return sortAsc ? 1 : -1;
-          return 0;
         });
-        sortAsc = !sortAsc;
-        renderFileTable();
-      };
+      }
+      document.getElementById("listFile").innerHTML = html;
+    }
 
-      async function loadDetail() {
-        const res = await fetch(
-          `https://be-telkom-access.vercel.app/locations/${id}`,
-          { headers: { Authorization: "Bearer " + token } }
-        );
-        const { lokasi, files, notes, status } = await res.json();
-        document.getElementById("namalokasi").innerText = lokasi.nama_lokasi;
-        statusData = status;
-        document.getElementById("statusChecklist").innerHTML =
-          renderChecklistStatus(status);
-        fileData = files || [];
-        renderFileTable();
+    window.sortTable = function (col) {
+      fileData.sort((a, b) => {
+        let v1 = (a[col] || "").toLowerCase();
+        let v2 = (b[col] || "").toLowerCase();
+        if (v1 < v2) return sortAsc ? -1 : 1;
+        if (v1 > v2) return sortAsc ? 1 : -1;
+        return 0;
+      });
+      sortAsc = !sortAsc;
+      renderFileTable();
+    };
 
-        let nhtml = "";
-        if (!notes || notes.length === 0) {
-          nhtml = `<tr><td colspan="4" style="text-align:center; color:#888888;">Tidak ada catatan ditemukan</td></tr>`;
-        } else {
-          notes.forEach((n, idx) => {
-            nhtml += `<tr>
+    async function loadDetail() {
+      const res = await fetch(
+        `https://be-telkom-access.vercel.app/locations/${id}`,
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      const { lokasi, files, notes, status } = await res.json();
+      document.getElementById("namalokasi").innerText = lokasi.nama_lokasi;
+      statusData = status;
+      document.getElementById("statusChecklist").innerHTML =
+        renderChecklistStatus(status);
+      fileData = files || [];
+      renderFileTable();
+
+      let nhtml = "";
+      if (!notes || notes.length === 0) {
+        nhtml = `<tr><td colspan="4" style="text-align:center; color:#888888;">Tidak ada catatan ditemukan</td></tr>`;
+      } else {
+        notes.forEach((n, idx) => {
+          nhtml += `<tr>
               <td>${idx + 1}</td>
               <td>${n.tipe}</td>
               <td>${n.isi}</td>
-              <td>${
-                userRole === "tif"
-                  ? ""
-                  : `<button class="edit-note-btn" data-id="${
-                      n.id
-                    }" data-isi="${encodeURIComponent(
-                      n.isi
-                    )}" onclick="showEditNoteModal(this)">Edit</button>
-                    <button class="danger" onclick="deleteNote('${
-                      n.id
-                    }')">Hapus</button>`
-              }</td>
+              <td>${userRole === "tif"
+              ? ""
+              : `<button class="edit-note-btn" data-id="${n.id
+              }" data-isi="${encodeURIComponent(
+                n.isi
+              )}" onclick="showEditNoteModal(this)">Edit</button>
+                    <button class="danger" onclick="deleteNote('${n.id
+              }')">Hapus</button>`
+            }</td>
             </tr>`;
-          });
-        }
-        document.getElementById("listNote").innerHTML = nhtml;
+        });
       }
+      document.getElementById("listNote").innerHTML = nhtml;
+    }
 
-      // ==== HANDLER FILE UPLOAD ====
-      async function uploadFileHandler(e) {
-        e.preventDefault();
-        if (userRole === "tif") {
-          alert("Akun TIF tidak diizinkan upload file.");
-          return false;
+    // ==== HANDLER FILE UPLOAD ====
+    async function uploadFileHandler(e) {
+      e.preventDefault();
+      if (userRole === "tif") {
+        alert("Akun TIF tidak diizinkan upload file.");
+        return false;
+      }
+      const fileInput = document.getElementById("file");
+      const file = fileInput.files[0];
+      if (!file) return alert("Pilih file terlebih dahulu!");
+
+      const tipe_file = document.getElementById("tipe_file").value;
+      const keterangan = document.getElementById("keterangan").value;
+      const msgDiv = document.getElementById("msg-upload");
+      msgDiv.innerText = "Mengunggah file...";
+      msgDiv.style.color = "#666";
+
+      // Upload ke backend pakai FormData
+      const form = new FormData();
+      form.append("file", file);
+      form.append("location_id", id);
+      form.append("tipe_file", tipe_file);
+      form.append("keterangan", keterangan);
+
+      try {
+        const res = await fetch(
+          "https://be-telkom-access.vercel.app/files/upload",
+          {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token },
+            body: form,
+          }
+        );
+        const data = await res.json();
+        if (res.ok && !data.error) {
+          msgDiv.style.color = "#22c55e";
+          msgDiv.innerText = "Upload file berhasil!";
+          fileInput.value = "";
+          document.getElementById("keterangan").value = "";
+          document.getElementById("tipe_file").selectedIndex = 0;
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 3000);
+          loadDetail();
+        } else {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = data.error || "Upload file gagal.";
         }
-        const fileInput = document.getElementById("file");
-        const file = fileInput.files[0];
-        if (!file) return alert("Pilih file terlebih dahulu!");
+      } catch (err) {
+        msgDiv.style.color = "red";
+        msgDiv.innerText = "Gagal upload. Cek koneksi/server.";
+      }
+    }
 
-        const tipe_file = document.getElementById("tipe_file").value;
-        const keterangan = document.getElementById("keterangan").value;
-        const msgDiv = document.getElementById("msg-upload");
-        msgDiv.innerText = "Mengunggah file...";
-        msgDiv.style.color = "#666";
+    // ==== HANDLER CATATAN ====
+    async function noteFormHandler(e) {
+      if (userRole === "tif") {
+        alert("Akun TIF tidak diizinkan menambah catatan.");
+        return false;
+      }
+      e.preventDefault();
+      const msgDiv = document.getElementById("msg-note");
+      msgDiv.innerText = "";
+      try {
+        const res = await fetch("https://be-telkom-access.vercel.app/notes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({
+            location_id: id,
+            tipe: document.getElementById("tipe_note").value,
+            isi: document.getElementById("isi_note").value,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && !data.error) {
+          msgDiv.style.color = "#22c55e";
+          msgDiv.innerText = "Catatan berhasil ditambahkan.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
+          document.getElementById("isi_note").value = "";
+          loadDetail();
+        } else {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = data.error || "Gagal menambah catatan.";
+        }
+      } catch (err) {
+        msgDiv.style.color = "red";
+        msgDiv.innerText = "Gagal terhubung ke server.";
+      }
+    }
 
-        // Upload ke backend pakai FormData
-        const form = new FormData();
-        form.append("file", file);
-        form.append("location_id", id);
-        form.append("tipe_file", tipe_file);
-        form.append("keterangan", keterangan);
+    // Modal Edit Note
+    let editingNoteId = null;
+    window.showEditNoteModal = function (btn) {
+      editingNoteId = btn.getAttribute("data-id");
+      const oldIsi = decodeURIComponent(btn.getAttribute("data-isi") || "");
+      document.getElementById("modalEditIsi").value = oldIsi;
+      document.getElementById("modalEditNote").style.display = "flex";
+      document.getElementById("modalEditIsi").focus();
+      document.getElementById("msg-edit-note").innerText = "";
+    };
+    window.closeEditNoteModal = function () {
+      document.getElementById("modalEditNote").style.display = "none";
+      editingNoteId = null;
+    };
+    document.getElementById("modalEditSimpanBtn").onclick =
+      async function () {
+        const isi = document.getElementById("modalEditIsi").value;
+        if (!editingNoteId) return;
+        const msgDiv = document.getElementById("msg-edit-note");
+        if (!msgDiv) return;
+        msgDiv.innerText = "Memproses...";
+        msgDiv.style.color = "#222";
 
         try {
           const res = await fetch(
-            "https://be-telkom-access.vercel.app/files/upload",
+            `https://be-telkom-access.vercel.app/notes/${editingNoteId}`,
             {
-              method: "POST",
-              headers: { Authorization: "Bearer " + token },
-              body: form,
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ isi }),
             }
           );
-          const data = await res.json();
-          if (res.ok && !data.error) {
+          if (res.ok) {
             msgDiv.style.color = "#22c55e";
-            msgDiv.innerText = "Upload file berhasil!";
-            fileInput.value = "";
-            document.getElementById("keterangan").value = "";
-            document.getElementById("tipe_file").selectedIndex = 0;
-            loadDetail();
+            msgDiv.innerText = "Catatan berhasil diperbarui.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+              closeEditNoteModal();
+              loadDetail();
+            }, 2000);
           } else {
             msgDiv.style.color = "red";
-            msgDiv.innerText = data.error || "Upload file gagal.";
-          }
-        } catch (err) {
-          msgDiv.style.color = "red";
-          msgDiv.innerText = "Gagal upload. Cek koneksi/server.";
-        }
-      }
-
-      // ==== HANDLER CATATAN ====
-      async function noteFormHandler(e) {
-        if (userRole === "tif") {
-          alert("Akun TIF tidak diizinkan menambah catatan.");
-          return false;
-        }
-        e.preventDefault();
-        const msgDiv = document.getElementById("msg-note");
-        msgDiv.innerText = "";
-        try {
-          const res = await fetch("https://be-telkom-access.vercel.app/notes", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-            body: JSON.stringify({
-              location_id: id,
-              tipe: document.getElementById("tipe_note").value,
-              isi: document.getElementById("isi_note").value,
-            }),
-          });
-          const data = await res.json();
-          if (res.ok && !data.error) {
-            msgDiv.style.color = "#22c55e";
-            msgDiv.innerText = "Catatan berhasil ditambahkan.";
+            msgDiv.innerText = "Gagal memperbarui catatan.";
             setTimeout(() => {
               msgDiv.innerText = "";
             }, 2000);
-            document.getElementById("isi_note").value = "";
-            loadDetail();
-          } else {
-            msgDiv.style.color = "red";
-            msgDiv.innerText = data.error || "Gagal menambah catatan.";
           }
         } catch (err) {
           msgDiv.style.color = "red";
           msgDiv.innerText = "Gagal terhubung ke server.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
         }
+      };
+
+    window.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") {
+        closeEditNoteModal();
+        closeEditFileModal();
       }
+    });
 
-      // Modal Edit Note
-      let editingNoteId = null;
-      window.showEditNoteModal = function (btn) {
-        editingNoteId = btn.getAttribute("data-id");
-        const oldIsi = decodeURIComponent(btn.getAttribute("data-isi") || "");
-        document.getElementById("modalEditIsi").value = oldIsi;
-        document.getElementById("modalEditNote").style.display = "flex";
-        document.getElementById("modalEditIsi").focus();
-        document.getElementById("msg-edit-note").innerText = "";
-      };
-      window.closeEditNoteModal = function () {
-        document.getElementById("modalEditNote").style.display = "none";
-        editingNoteId = null;
-      };
-      document.getElementById("modalEditSimpanBtn").onclick =
-        async function () {
-          const isi = document.getElementById("modalEditIsi").value;
-          if (!editingNoteId) return;
-          const msgDiv = document.getElementById("msg-edit-note");
-          if (!msgDiv) return;
-          msgDiv.innerText = "Memproses...";
-          msgDiv.style.color = "#222";
+    window.deleteNote = function (noteId) {
+      if (userRole === "tif") return;
+      if (confirm("Yakin hapus catatan ini?")) {
+        fetch(`https://be-telkom-access.vercel.app/notes/${noteId}`, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token },
+        }).then(loadDetail);
+      }
+    };
 
-          try {
-            const res = await fetch(
-              `https://be-telkom-access.vercel.app/notes/${editingNoteId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + token,
-                },
-                body: JSON.stringify({ isi }),
-              }
-            );
-            if (res.ok) {
-              msgDiv.style.color = "#22c55e";
-              msgDiv.innerText = "Catatan berhasil diperbarui.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-                closeEditNoteModal();
-                loadDetail();
-              }, 2000);
-            } else {
-              msgDiv.style.color = "red";
-              msgDiv.innerText = "Gagal memperbarui catatan.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-              }, 2000);
+    // Modal Edit File
+    let editingFileId = null;
+    window.editFile = function (fileId, oldKet) {
+      if (userRole === "tif") return;
+      editingFileId = fileId;
+      document.getElementById("modalEditKetFile").value = oldKet || "";
+      document.getElementById("modalEditFile").style.display = "flex";
+      document.getElementById("modalEditKetFile").focus();
+    };
+    window.closeEditFileModal = function () {
+      document.getElementById("modalEditFile").style.display = "none";
+      editingFileId = null;
+    };
+    document.getElementById("modalEditFileSimpanBtn").onclick =
+      async function () {
+        if (userRole === "tif") return;
+        const ket = document.getElementById("modalEditKetFile").value;
+        if (!editingFileId) return;
+        const msgDiv = document.getElementById("msg-upload");
+        msgDiv.innerText = "Memproses...";
+        try {
+          const res = await fetch(
+            `https://be-telkom-access.vercel.app/files/${editingFileId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ keterangan: ket }),
             }
-          } catch (err) {
+          );
+          if (res.ok) {
+            msgDiv.style.color = "#22c55e";
+            msgDiv.innerText = "Keterangan file berhasil diperbarui.";
+            setTimeout(() => {
+              msgDiv.innerText = "";
+            }, 2000);
+          } else {
             msgDiv.style.color = "red";
-            msgDiv.innerText = "Gagal terhubung ke server.";
+            msgDiv.innerText = "Gagal memperbarui keterangan file.";
             setTimeout(() => {
               msgDiv.innerText = "";
             }, 2000);
           }
-        };
-
-      window.addEventListener("keydown", function (ev) {
-        if (ev.key === "Escape") {
-          closeEditNoteModal();
           closeEditFileModal();
-        }
-      });
-
-      window.deleteNote = function (noteId) {
-        if (userRole === "tif") return;
-        if (confirm("Yakin hapus catatan ini?")) {
-          fetch(`https://be-telkom-access.vercel.app/notes/${noteId}`, {
-            method: "DELETE",
-            headers: { Authorization: "Bearer " + token },
-          }).then(loadDetail);
+          loadDetail();
+        } catch (err) {
+          msgDiv.style.color = "red";
+          msgDiv.innerText = "Gagal terhubung ke server.";
+          setTimeout(() => {
+            msgDiv.innerText = "";
+          }, 2000);
         }
       };
 
-      // Modal Edit File
-      let editingFileId = null;
-      window.editFile = function (fileId, oldKet) {
-        if (userRole === "tif") return;
-        editingFileId = fileId;
-        document.getElementById("modalEditKetFile").value = oldKet || "";
-        document.getElementById("modalEditFile").style.display = "flex";
-        document.getElementById("modalEditKetFile").focus();
-      };
-      window.closeEditFileModal = function () {
-        document.getElementById("modalEditFile").style.display = "none";
-        editingFileId = null;
-      };
-      document.getElementById("modalEditFileSimpanBtn").onclick =
-        async function () {
-          if (userRole === "tif") return;
-          const ket = document.getElementById("modalEditKetFile").value;
-          if (!editingFileId) return;
-          const msgDiv = document.getElementById("msg-upload");
-          msgDiv.innerText = "Memproses...";
-          try {
-            const res = await fetch(
-              `https://be-telkom-access.vercel.app/files/${editingFileId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + token,
-                },
-                body: JSON.stringify({ keterangan: ket }),
-              }
-            );
-            if (res.ok) {
-              msgDiv.style.color = "#22c55e";
-              msgDiv.innerText = "Keterangan file berhasil diperbarui.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-              }, 2000);
-            } else {
-              msgDiv.style.color = "red";
-              msgDiv.innerText = "Gagal memperbarui keterangan file.";
-              setTimeout(() => {
-                msgDiv.innerText = "";
-              }, 2000);
-            }
-            closeEditFileModal();
-            loadDetail();
-          } catch (err) {
-            msgDiv.style.color = "red";
-            msgDiv.innerText = "Gagal terhubung ke server.";
-            setTimeout(() => {
-              msgDiv.innerText = "";
-            }, 2000);
-          }
-        };
+    window.deleteFile = function (fileId) {
+      if (userRole === "tif") return;
+      if (confirm("Yakin hapus file ini?")) {
+        fetch(`https://be-telkom-access.vercel.app/files/${fileId}`, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token },
+        }).then(loadDetail);
+      }
+    };
+  </script>
+</body>
 
-      window.deleteFile = function (fileId) {
-        if (userRole === "tif") return;
-        if (confirm("Yakin hapus file ini?")) {
-          fetch(`https://be-telkom-access.vercel.app/files/${fileId}`, {
-            method: "DELETE",
-            headers: { Authorization: "Bearer " + token },
-          }).then(loadDetail);
-        }
-      };
-    </script>
-  </body>
 </html>
